@@ -40,6 +40,12 @@ function NetClass:SendPlayRequest(station, ent)
 	net.Start("CRadio.Core.RequestStatusChange")
 	net.WriteBool(isEnabling)
 
+	if isEnabling then
+		-- print("[NetClass] - ReceivePlayRequest | name: ", station:GetName())
+
+		net.WriteString(station:GetName())
+	end
+
 	local isCustomEnt = isentity(ent)
 
 	-- COMMENT:
@@ -47,10 +53,6 @@ function NetClass:SendPlayRequest(station, ent)
 
 	if isCustomEnt then
 		net.WriteEntity(ent)
-	end
-
-	if isEnabling then
-		net.WriteString(station:GetName())
 	end
 
 	net.SendToServer()
@@ -63,10 +65,13 @@ function NetClass:ReceivePlayRequest(len, ply)
 
 	local isEnabling = net.ReadBool()
 	local station = nil
+	local stationName = net.ReadString()
 
 	if isEnabling then
-		station = CRadio:GetStation(net.ReadString())
+		station = CRadio:GetStation(stationName)
 	end
+
+	-- print("[NetClass] - ReceivePlayRequest | stationName/station: ", stationName, station)
 
 	-- COMMENT:
 	local ent = ply:GetVehicle()
@@ -75,6 +80,8 @@ function NetClass:ReceivePlayRequest(len, ply)
 	if isCustomEnt then
 		ent = net.ReadEntity()
 	end
+
+	-- print("[NetClass] - ReceivePlayRequest | isCustomEnt/ent: ", isCustomEnt, ent)
 
 	-- COMMENT
 	if isCustomEnt and !ent.IsCRadioEnt then
