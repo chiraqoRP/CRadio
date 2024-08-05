@@ -1,10 +1,6 @@
 local GUIClass = {}
 GUIClass.__index = GUIClass
 
-function GUIClass:__constructor()
-    self.FailureDelay = GetConVar("cradio_failuredelay")
-end
-
 local classString = "[GUI Object] - CRadio"
 
 function GUIClass:__tostring()
@@ -28,6 +24,11 @@ function GUIClass:Open()
         return
     end
 
+    -- If we don't have any stations installed, the menu has no use.
+    if table.IsEmpty(CRadio:GetStations(true)) then
+        return
+    end
+
     -- Mark the menu as open to prevent panel spam.
     self.MenuOpen = true
 
@@ -36,7 +37,7 @@ function GUIClass:Open()
 
     local scrW, scrH = ScrW(), ScrH()
 
-    -- Caches the center coordinates since this is a very common operation.
+    -- Caches the center coordinates which are used commonly.
     self.CenterX = scrW / 2
     self.CenterY = scrH / 2
 
@@ -61,6 +62,9 @@ function GUIClass:Close(immediate)
     self.MenuOpen = false
 end
 
+--- Gets the hovered element based on mouse position.
+-- @param {integer} amount of elements
+-- @return {integer} index of the hovered element
 function GUIClass:GetHovered(elementCount)
     local mx, my = gui.MousePos()
 
@@ -80,66 +84,13 @@ function GUIClass:GetHovered(elementCount)
     return hoveredElement
 end
 
-local iconSize = 64
-
--- Prevents our cursor from being on/within a specified circular radius of the screen's center.
-local function IsCursorNearCenter(self2, x, y)
-    local mouseX, mouseY = x, y
-    local centerX, centerY = self2.CenterX, self2.CenterY
-
-    -- Radius of the (center) circle.
-    local centerRadius = (300 + (iconSize * 2.4)) - 64
-
-    -- Calculate the distance between our cursor and the circle's center.
-    local distance = math.sqrt((mouseX - centerX) ^ 2 + (mouseY - centerY) ^ 2)
-
-    -- If our cursor is inside or directly on the circle, adjust its position.
-    if distance <= centerRadius then
-        -- Calculate the new cursor position outside of the circle.
-        local angle = math.atan2(mouseY - centerY, mouseX - centerX)
-        local newX = centerX + centerRadius * math.cos(angle)
-        local newY = centerY + centerRadius * math.sin(angle)
-
-        -- Set our new cursor position.
-        input.SetCursorPos(newX, newY)
-
-        return true
-    end
-
-    return false
-end
-
--- Constrains our cursor within the bounds of a specified circular radius on the screen's center.
-local function KeepCursorWithinBounds(self2, x, y)
-    -- Radius of the wheel plus the station panels approximate size (iconSize * 2.2).
-    local circleRadius = 300 + (iconSize * 2.4)
-    local centerX, centerY = self2.CenterX, self2.CenterY
-
-    -- Calculate the distance between our cursor and the circle's center.
-    local distance = math.sqrt((centerX - x) ^ 2 + (centerY - y) ^ 2)
-
-    -- If our cursor is outside the circle, constrain it within the circle.
-    if distance > circleRadius then
-        -- Calculate angle between our cursor's position and the circle's center.
-        local angle = math.atan2(y - centerY, x - centerX)
-
-        -- Calculate the clamped cursor's position on the circle's boundary.
-        local clampedX = centerX + circleRadius * math.cos(angle)
-        local clampedY = centerY + circleRadius * math.sin(angle)
-
-        -- Set our cursor's position to the new clamped position.
-        input.SetCursorPos(clampedX, clampedY)
-
-        return true
-    end
-
-    return false
-end
-
-local offString = "Radio Off"
 local circles = include("circles.lua")
+local offString = "Radio Off"
+local iconSize = 64
 local lastHovered = 0
 
+--- Builds our GUI's DFrame.
+-- @return {panel} the newly created dframe
 function GUIClass:BuildFrame()
     local self2 = self
 
@@ -193,7 +144,7 @@ function GUIClass:BuildFrame()
         end
     end
 
-    -- COMMENT
+    -- We set this to an obviously unreachable integer to prevent hoveredElement == lastHovered on GUI open.
     lastHovered = 512
 
     function motherFrame:DoElementHover()
@@ -227,8 +178,6 @@ function GUIClass:BuildFrame()
 
             lastHovered = hoveredElement
         end
-
-        -- lastHovered = hoveredElement
     end
 
     local lastStation = nil
@@ -275,13 +224,13 @@ function GUIClass:BuildFrame()
     end
 
     function motherFrame:OnCursorMoved(x, y)
-        local cursorNearCenter = IsCursorNearCenter(self2, x, y)
+        local cursorNearCenter = self2:IsCursorNearCenter(x, y)
 
         if cursorNearCenter then
             return true
         end
 
-        local isWithinBounds = KeepCursorWithinBounds(self2, x, y)
+        local isWithinBounds = self2:KeepCursorWithinBounds(x, y)
 
         if !isWithinBounds then
             return true
@@ -291,8 +240,68 @@ function GUIClass:BuildFrame()
     return motherFrame
 end
 
+--- Prevents our cursor from being on/within a specified circular radius of the screen's center.
+-- @param {float} our mouse's x position
+-- @return {float} our mouse's y position
+function GUIClass:IsCursorNearCenter(x, y)
+    local mouseX, mouseY = x, y
+    local centerX, centerY = self.CenterX, self.CenterY
+
+    -- Radius of the (center) circle.
+    local centerRadius = (300 + (iconSize * 2.4)) - 64
+
+    -- Calculate the distance between our cursor and the circle's center.
+    local distance = math.sqrt((mouseX - centerX) ^ 2 + (mouseY - centerY) ^ 2)
+
+    -- If our cursor is inside or directly on the circle, adjust its position.
+    if distance <= centerRadius then
+        -- Calculate the new cursor position outside of the circle.
+        local angle = math.atan2(mouseY - centerY, mouseX - centerX)
+        local newX = centerX + centerRadius * math.cos(angle)
+        local newY = centerY + centerRadius * math.sin(angle)
+
+        -- Set our new cursor position.
+        input.SetCursorPos(newX, newY)
+
+        return true
+    end
+
+    return false
+end
+
+--- Restricts our cursor to the bounds of a specified circular radius at the screen's center.
+-- @param {float} our mouse's x position
+-- @return {float} our mouse's y position
+function GUIClass:KeepCursorWithinBounds(x, y)
+    -- Radius of the wheel plus the station panels approximate size (iconSize * 2.2).
+    local circleRadius = 300 + (iconSize * 2.4)
+    local centerX, centerY = self.CenterX, self.CenterY
+
+    -- Calculate the distance between our cursor and the circle's center.
+    local distance = math.sqrt((centerX - x) ^ 2 + (centerY - y) ^ 2)
+
+    -- If our cursor is outside the circle, constrain it within the circle.
+    if distance > circleRadius then
+        -- Calculate angle between our cursor's position and the circle's center.
+        local angle = math.atan2(y - centerY, x - centerX)
+
+        -- Calculate the clamped cursor's position on the circle's boundary.
+        local clampedX = centerX + circleRadius * math.cos(angle)
+        local clampedY = centerY + circleRadius * math.sin(angle)
+
+        -- Set our cursor's position to the new clamped position.
+        input.SetCursorPos(clampedX, clampedY)
+
+        return true
+    end
+
+    return false
+end
+
 local minIcon = 16
 
+--- Calculates the size of elements based on the amount of them.
+-- @param {integer} amount of elements
 local function CalcElementSize(count)
     if count > 12 then
         iconSize = 64 - (minIcon - minIcon / (count - 12))
@@ -304,6 +313,7 @@ local function CalcElementSize(count)
     end
 end
 
+--- Constructs our elements and stores them in our GUI's elements table.
 function GUIClass:BuildElements()
     local stations = CRadio:GetStations(true)
     local count = #stations + 1
@@ -375,11 +385,17 @@ local offMatPath = "cradio/icons/radio_off.png"
 local gradientLeftMat, gradientRightMat = Material("vgui/gradient-l"), Material("vgui/gradient-r")
 local panelsGenerated = 0
 
+--- Builds a station panel based on the element table provided.
+-- @param {station} our panels desired station
+-- @param {table} our constructed element table
+-- @param {boolean} whether the panel is the off button or not.
+-- @return {panel} our newly created station panel
 function GUIClass:BuildStationPanel(station, element, isOffButton)
-    if !element then return end
+    if !element then
+        return
+    end
 
     local radius_m = iconSize * 2.2
-
     local stationPanel = vgui.Create("DPanel", self.Frame)
     stationPanel:SetSize(radius_m, radius_m)
     stationPanel:SetPos(element.x - radius_m / 2, element.y - radius_m / 2)
@@ -402,7 +418,7 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
         -- Creates our station's icon material, deleted when GUIClass:Close is called.
         self.Icon = Material(iconPath, "smooth mips")
 
-        -- COMMENT
+        -- If the station has no name (aka isOffButton == true), then we use the number of generated panels for the timer.
         local stationName = station and station:GetName() or tostring(panelsGenerated)
 
         self.TimerName = string.format(timerFormat, stationName)
@@ -450,12 +466,16 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
             local isHovered = IsValid(self) and IsValid(vehicle) and self.isHovered
 
             -- If we aren't hovered or the frame was closed, do nothing.
-            if !isHovered then return end
+            if !isHovered then
+                return
+            end
 
             local cNet = CRadio:GetNet()
 
             -- If true, stops this vehicle's audio channel for all listeners.
             local shouldStop = (isOffButton and false)
+
+            print("sendplayrequest called", shouldStop or station)
 
             -- If we don't stop playback, switches all listeners audio channels to one for this station. 
             cNet:SendPlayRequest(shouldStop or station)
@@ -475,7 +495,7 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
         -- Sets our hovered station.
         self2.HoveredStation = station
 
-        -- COMMENT
+        -- There can only be one "off" button so we make it a separate var.
         self2.IsOffHovered = isOffButton
 
         -- If this isn't a "radio off" button, we have a valid current station, and its the same as this station, do nothing.
@@ -497,8 +517,11 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
     return stationPanel
 end
 
+--- Builds all our station panels based on the element(s) calculated in BuildElements.
 function GUIClass:BuildStationPanels()
-    if !IsValid(self.Frame) then return end
+    if !IsValid(self.Frame) then
+        return
+    end
 
     self:BuildElements()
 
@@ -555,42 +578,42 @@ function GUIClass:BuildStationPanels()
     end
 end
 
--- COMMENT
+-- We only scale down the notification panel and fonts if our width is below 2560.
 local screenWidth = ScrW()
-local scaleMul = screenWidth < 1920 and screenWidth / 1920 or 1.0
+local scaleMul = screenWidth / 2560 or 1.0
 
--- COMENT
+-- recordMat and armMat are fallbacks used when a song doesn't have a valid cover.
 local recordMat = Material("cradio/icons/notification_record.png", "smooth mips")
 local armMat = Material("cradio/icons/notification_arm.png", "smooth mips")
 local backgroundColor = Color(40, 40, 40, 150)
 local bufferTextColor = Color(255, 255, 255, 0)
 local bufferFormat = "%.2f%%"
 
+--- Builds a "now playing" notification panel which is then removed after a variable time by multiple timers.
+-- @param {song} the song we want to use
 function GUIClass:DoPlayNotification(song)
     if !song or !song:IsValid() then
         return
     end
 
-    -- COMMENT
+    -- We have to cache this outside of __constructor because of lua add/include order.
+    self.FailureDelay = self.FailureDelay or GetConVar("cl_cradio_failuredelay")
+
     local self2 = self
-    local y = 64
-
-    -- MsgC(Color(203, 26, 219), "called lmao")
-
+    local y = 64 * scaleMul
     local oldFrame = self.NotificationPanel
 
-    -- COMMENT
     if IsValid(oldFrame) then
-        -- COMMENT
+        -- Stop any active animations on the old notification.
         oldFrame:Stop()
 
-        -- COMMENT
+        -- Kill the timers too.
         oldFrame.BeingRemoved = true
 
-        oldFrame:MoveTo(ScrW() + 36, y, 2, 0, 0.25, function(animData, pFrame)
+        oldFrame:MoveTo(ScrW() + 36 * scaleMul, y, 2, 0, 0.25, function(animData, pFrame)
             pFrame:Remove()
 
-            -- COMMENT
+            -- Play the queued notification once the old notification is removed.
             self2:DoPlayNotification(song)
         end)
 
@@ -600,26 +623,25 @@ function GUIClass:DoPlayNotification(song)
     end
 
     local frame = vgui.Create("DPanel")
-    frame:SetSize(420, 144)
+    frame:SetSize(420 * scaleMul, 144 * scaleMul)
     frame:SetPos(ScrW(), y)
 
-    -- COMMENT
-    frame:MoveTo(ScrW() - 420 - 32, y, 2, 0, 0.25)
+    -- Move onto screen.
+    frame:MoveTo(ScrW() - 420 * scaleMul - 32 * scaleMul, y, 2, 0, 0.25)
 
-    -- COMMENT
+    -- Cache our song's vars.
     local name, artist, release = song:GetName(), song:GetArtist(), song:GetRelease()
 
-    -- COMMENT
     surface.SetFont("CRadio.MainBold")
     local nTextWidth, nTextHeight = surface.GetTextSize(name)
 
-    -- COMMENT
     surface.SetFont("CRadio.Main")
     local aTextWidth, aTextHeight = surface.GetTextSize(artist)
     local rTextWidth, _ = surface.GetTextSize(release)
 
-    -- COMMENT
-    local coverMat, _ = Material(song:GetCover() or "")
+    -- Material expects a string, so we provide an empty (nil) one if our song has no cover.
+    -- We also set it to smooth if we're scaling, as IMaterial scaling is awful and smooth improves it slightly.
+    local coverMat, _ = Material(song:GetCover() or "", scaleMul != 1.0 and "smooth" or "")
     local scrollOffset = 0
 
     function frame:Paint(w, h)
@@ -628,60 +650,58 @@ function GUIClass:DoPlayNotification(song)
         -- :scammer:
         surface.SetDrawColor(255, 255, 255, 255)
 
-        local textOffset = 100
+        local textOffset = 128 + 16
+        local drawHeight = 128 * scaleMul
 
         if coverMat and !coverMat:IsError() then
             surface.SetMaterial(coverMat)
 
-            -- COMMENT
+            -- For non-square covers, we calculate the ratio between width and height.
             local widthRatio = coverMat:Width() / coverMat:Height()
             local drawWidth = 128 * widthRatio
 
-            -- COMMENT
-            surface.DrawTexturedRect(6, 8, drawWidth, 128)
+            -- Height is enforced, but we scale our width based on the width-to-height ratio.
+            surface.DrawTexturedRect(6 * scaleMul, 8 * scaleMul, drawWidth, drawHeight)
 
-            -- COMMENT
             textOffset = drawWidth + 16
         else
             self.RecordAngle = (self.RecordAngle or 0) + FrameTime() * 60
 
             DisableClipping(true)
             surface.SetMaterial(recordMat)
-            surface.DrawTexturedRectRotated(6 + 128 / 2, 8 + 128 / 2, 128, 128, self.RecordAngle)
+            surface.DrawTexturedRectRotated(6 + drawHeight / 2, 8 + drawHeight / 2, drawHeight, drawHeight, self.RecordAngle)
 
             self.ArmAngle = (self.ArmAngle or 0) + FrameTime() * 4
 
             surface.SetMaterial(armMat)
-            surface.DrawTexturedRectRotated(16 + 38 / 2, 16 + 94 / 2, 38, 94, self.ArmAngle)
+            surface.DrawTexturedRectRotated(6 * scaleMul + (38 * scaleMul) / 2, 8 * scaleMul + (94 * scaleMul) / 2, 38 * scaleMul, 94 * scaleMul, self.ArmAngle)
             DisableClipping(false)
-
-            textOffset = 128 + 16
         end
 
-        -- COMMENT
         surface.SetFont("CRadio.MainBold")
 
-        local textRange = 420 - (6 + textOffset)
+        local textRange = w - (6 + textOffset)
         local nTextOffset = textOffset
 
+        -- Draws the song name in bold lettering.
         surface.SetTextColor(255, 255, 255)
         surface.SetTextPos(nTextOffset, 10)
         surface.DrawText(name)
 
-        -- COMMENT
+        -- Draws the separator between name and release/artist.
         surface.SetDrawColor(255, 255, 255, 255)
-        surface.DrawRect(nTextOffset - 2, nTextHeight + 10 + 4, 420 - nTextOffset - 2, 6)
+        surface.DrawRect(nTextOffset - 2, nTextHeight + 10 + 4, w - nTextOffset - 2, 6)
 
-        -- COMMENT
         surface.SetFont("CRadio.Main")
 
         local aTextOffset = textOffset
 
+        -- Draws the artist in regular lettering.
         surface.SetTextColor(200, 200, 200)
         surface.SetTextPos(aTextOffset, nTextHeight + 10 + 6 + 4 + 4)
         surface.DrawText(artist)
 
-        -- COMMENT
+        -- Draws the release (if present) in regular lettering.
         if release then
             local rTextOffset = textOffset
 
@@ -690,35 +710,35 @@ function GUIClass:DoPlayNotification(song)
             surface.DrawText(release)
         end
 
-        -- COMMENT
+        -- Draws the buffer progress if needed, this is controlled in our :Think function.
         if self.DrawBuffering then
             local bufferProgress = self.BufferProgress or 0
             local bufferStr = nil
 
-            -- COMMENT
+            -- This happens very rarely, only with URl streams.
             if self.BufferingFailed then
                 bufferStr = "Failed to load!"
             elseif bufferProgress == 1.00 then
                 bufferStr = "Loaded!"
             else
-                -- COMMENT
+                -- We multiply the progress float to have three digits (1.00% --> 100.00%).
                 bufferStr = string.format(bufferFormat, bufferProgress * 100)
             end
 
-            -- COMMENT
             local _, bTextHeight = surface.GetTextSize(bufferStr)
+
+            -- This approaches 1.0 from 0.0, for alpha fade-in.
             local alphaMul = math.Approach(self.AlphaMult or 0, 1, FrameTime() / 0.4)
 
             bufferTextColor.a = 255 * alphaMul
 
-            -- COMMENT
+            -- Draws our percentage string right aligned.
             draw.SimpleText(bufferStr, "DermaDefault", w - 4, h - bTextHeight - 6, bufferTextColor, TEXT_ALIGN_RIGHT)
 
-            -- COMMENT
+            -- Draws our progress bar.
             surface.SetDrawColor(255, 255, 255, 50 * alphaMul)
             surface.DrawRect(0, h - 4, bufferProgress * w, 4)
 
-            -- COMMENT
             self.AlphaMult = alphaMul
         end
     end
@@ -728,7 +748,7 @@ function GUIClass:DoPlayNotification(song)
     function frame:Think()
         local client = LocalPlayer()
 
-        -- COMMENT
+        -- If we aren't in a vehicle or we disconnect, kill the panel instantly.
         if !IsValid(client) or !client:InVehicle() then
             self:Remove()
 
@@ -737,23 +757,22 @@ function GUIClass:DoPlayNotification(song)
 
         local channelDead = !stationChannel or !stationChannel:IsValid()
 
-        -- COMMENT
+        -- If our channel is removed, start the kill timer.
         if channelDead then
-            -- COMMENT
             frame:Kill()
 
             return
         end
 
-        -- COMMENT
         local bufferedTime, seekTime = stationChannel:GetBufferedTime(), song:GetCurTime()
         local isPlaying = stationChannel:GetState() == GMOD_CHANNEL_PLAYING
 
-        -- COMMENT
+        -- If our song is not playing, the buffering has halted, and it is not fully buffered, it has failed to load.
         if !isPlaying and bufferedTime == self.BufferedTime and bufferedTime < seekTime then
-            self.StalledTime = self.StalledTime or CurTime()
+            self.StalledTime = self.StalledTime or CurTime()    
 
-            -- COMMENT
+            -- DoBuffering waits before considering it a failed load and removing the channel.
+            -- We do the same with slightly less delay so we can inform the user.
             if (CurTime() - self.StalledTime) >= math.min(4, self2.FailureDelay:GetFloat() - 1) then
                 self.BufferingFailed = true
 
@@ -764,10 +783,9 @@ function GUIClass:DoPlayNotification(song)
         local sysTime = SysTime()
         local bufferProgress = math.Clamp(bufferedTime / seekTime, 0, 1)
 
-        -- COMMENT
         self.StartTime = self.StartTime or sysTime
 
-        -- COMMENT
+        -- If the channel is buffering, progress is below 98.00%, and 0.5s have passed we draw buffering progress.
         if (sysTime - self.StartTime) >= 0.5 and !isPlaying and bufferProgress < 0.98 then
             self.DrawBuffering = true
         end
@@ -775,7 +793,7 @@ function GUIClass:DoPlayNotification(song)
         self.BufferedTime = bufferedTime
         self.BufferProgress = bufferProgress
 
-        -- COMMENT
+        -- If the channel is playing and we haven't started the kill timer, do so.
         if isPlaying and !self.StartedRemoveAnim then
             self.EndTime = self.EndTime or sysTime
 
@@ -797,7 +815,6 @@ function GUIClass:DoPlayNotification(song)
         self.StartedRemoveAnim = true
     end
 
-    -- COMMENT
     self.NotificationPanel = frame
 end
 
@@ -815,12 +832,4 @@ surface.CreateFont( "CRadio.MainBold", {
     extended = true
 })
 
-GUIClass:__constructor()
-
 CRadioGUIClass = GUIClass
-
-if CRadio then
-    local cGUI = GUIClass
-
-    CRadio.GUI = cGUI
-end
