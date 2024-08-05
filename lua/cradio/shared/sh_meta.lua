@@ -68,7 +68,7 @@ if CLIENT then
         StopStatic(parent)
     end
 
-    local failureDelay = CreateClientConVar("cradio_failuredelay", 5, true, false, "", 5, 30)
+    local failureDelay = CreateClientConVar("cl_cradio_failuredelay", 5, true, false, "", 5, 30)
     local hookBufferFormat = "CRadio_Buffer-%i"
 
     local function DoBuffer(parent, channel, station, time, doFade, bufferCallback)
@@ -98,6 +98,8 @@ if CLIENT then
 
             timeElapsed = curTime - startTime
 
+            -- print("DoBuffering | timeElapsed: ", timeElapsed)
+
             local isValid = channel and channel:IsValid() and IsValid(parent)
 
             -- Detect if the audio channel was stopped.
@@ -111,6 +113,9 @@ if CLIENT then
 
             local bufferedTime = channel:GetBufferedTime()
             local seekTime = math.Clamp(time + timeElapsed, 0, songLength)
+
+            -- print("DoBuffering | bufferedTime: ", bufferedTime)
+            -- print("DoBuffering | seekTime: ", seekTime)
 
             -- COMMENT
             if bufferedTime == lastBufferedTime and bufferedTime < seekTime then
@@ -142,12 +147,6 @@ if CLIENT then
 
                 -- COMMENT
                 KillBufferHook(identifier, nil, parent)
-
-                timer.Simple(0, function()
-                    if hook.GetTable().Think[identifier] then
-                        MsgC(Color(255, 0, 0), "HOOK [", identifier, "] WAS NOT REMOVED\n")
-                    end
-                end)
 
                 return
             end
@@ -220,7 +219,7 @@ if CLIENT then
         end
     end
 
-    local 3dFlags = "3d mono "
+    local _3dFlags = "3d mono %s"
     local urlFlags = "noplay noblock"
     local fileFlags = "noplay"
 
@@ -260,12 +259,14 @@ if CLIENT then
 
         -- If the song's CurTime is below a reasonable margin (0-1.5 seconds), do not use noblock.
         -- Doing this saves bandwidth and some performance (no need for a buffer callback).
-        local channelFlags = urlValid and curSongTime < 1.5 and urlFlags or fileFlags
+        local channelFlags = urlValid and curSongTime > 1.5 and urlFlags or fileFlags
 
         -- COMMENT
         if enable3D then
-            channelFlags = string.concat(3dFlags, channelFlags)
+            channelFlags = string.format(_3dFlags, channelFlags)
         end
+
+        -- MsgC("ENTITY:RadioChannel | channelFlags: ", Color(0, 255, 0), channelFlags, "\n")
 
         -- COMMENT
         if audioFile then
