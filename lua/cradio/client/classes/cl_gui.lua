@@ -637,7 +637,11 @@ function GUIClass:DoPlayNotification(song)
 
     surface.SetFont("CRadio.Main")
     local aTextWidth, aTextHeight = surface.GetTextSize(artist)
-    local rTextWidth, _ = surface.GetTextSize(release)
+    local rTextWidth = 0
+
+    if release then
+        rTextWidth, _ = surface.GetTextSize(release)
+    end
 
     -- Material expects a string, so we provide an empty (nil) one if our song has no cover.
     -- We also set it to smooth if we're scaling, as IMaterial scaling is awful and smooth improves it slightly.
