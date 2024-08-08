@@ -105,7 +105,7 @@ function GUIClass:BuildFrame()
     motherFrame.lblTitle:SetText("")
 
     function motherFrame:PostInit()
-        -- self:SetCursor("blank")
+        self:SetCursor("blank")
 
         self.Elements = {}
 
@@ -404,7 +404,7 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
     local self2 = self
 
     function stationPanel:PostInit()
-        -- self:SetCursor("blank")
+        self:SetCursor("blank")
 
         self.Station = station
 
@@ -474,8 +474,6 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
 
             -- If true, stops this vehicle's audio channel for all listeners.
             local shouldStop = (isOffButton and false)
-
-            print("sendplayrequest called", shouldStop or station)
 
             -- If we don't stop playback, switches all listeners audio channels to one for this station. 
             cNet:SendPlayRequest(shouldStop or station)

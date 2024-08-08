@@ -279,7 +279,9 @@ local function InsertSubPlaylist(playlist, subplaylist, index)
 end
 
 function StationClass:GeneratePlaylist()
-	if CLIENT then return end
+	if CLIENT then
+		return 
+	end
 
 	-- Empty our playlist table.
 	self.Playlist = {}
