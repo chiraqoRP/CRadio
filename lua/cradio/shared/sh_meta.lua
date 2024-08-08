@@ -68,6 +68,7 @@ if CLIENT then
         StopStatic(parent)
     end
 
+    local defaultVol = CreateClientConVar("cl_cradio_volume", 1.0, true, false, "", 0, 1.0)
     local failureDelay = CreateClientConVar("cl_cradio_failuredelay", 5, true, false, "", 5, 30)
     local hookBufferFormat = "CRadio_Buffer-%i"
 
@@ -136,7 +137,9 @@ if CLIENT then
                 channel:Play()
 
                 if doFade then
-                    channel:DoFade(0.5, 0, 1.0)
+                    channel:DoFade(0.5, 0, defaultVol:GetFloat())
+                else
+                    channel:SetVolume(defaultVol:GetFloat())
                 end
 
                 if isfunction(bufferCallback) then
@@ -353,7 +356,9 @@ if CLIENT then
     local hookFadeFormat = "CRadio_Fade-%i"
 
     function AUDIOCHANNEL:DoFade(length, from, to, callback)
-        if !length then return end
+        if !length then
+            return
+        end
 
         local identifier = nil
         local thinkHooks = hook.GetTable().Think
@@ -413,6 +418,26 @@ if CLIENT then
 
 		cNet:ReceivePlaylist(len)
 	end)
+
+    cvars.AddChangeCallback("cl_cradio_volume", function(name, old, new)
+        if old == new then
+            return
+        end
+
+        local vehicle = CLib.GetVehicle(LocalPlayer():GetVehicle())
+
+        if !IsValid(vehicle) then
+            return
+        end
+
+        local radioChannel = vehicle:GetRadioChannel()
+
+        if !radioChannel or !radioChannel:IsValid() or math.Round(old, 1) != math.Round(radioChannel:GetVolume(), 1) then
+            return
+        end
+
+        radioChannel:SetVolume(new)
+    end)
 else
 	net.Receive("CRadio.Core.RequestStatusChange", function(len, ply)
 		local cNet = CRadio:GetNet()
