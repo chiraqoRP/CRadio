@@ -49,7 +49,7 @@ function SongClass:IsValid()
 		return false
 	end
 
-	return string.IsValid(self.URL) and self.Parent:IsValid()
+	return (string.IsValid(self.URL) or string.IsValid(self.Filepath)) and self.Parent:IsValid()
 end
 
 function SongClass:New(name)
@@ -195,14 +195,24 @@ end
 
 function SongClass:GetFile()
 	if !self:IsValid() then
+		return
+	end
+
+	return self.Filepath
+end
+
+function SongClass:SetFile(filePath)
+	self.Filepath = filePath
+end
+
+function SongClass:GetFileExists()
+	if SERVER or !self:IsValid() then
 		return false
 	end
 
 	if self.FileExists == nil then
-		local filePath = string.format(pathFormat, self:GetStation():GetSanitizedName(), self.Filename)
-
 		-- Sound files are not automatically precached, so its fine to place them in sounds.
-		self.FileExists = file.Exists(filePath, "GAME")
+		self.FileExists = file.Exists(self.Filepath, "GAME")
 	end
 
 	return self.FileExists

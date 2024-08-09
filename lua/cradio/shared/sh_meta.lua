@@ -241,7 +241,7 @@ if CLIENT then
 
         local curSongTime = curSong:GetCurTime()
         local url = curSong:GetURL()
-        local audioFile = curSong:GetFile()
+        local fileValid, audioFile = curSong:GetFileExists(), curSong:GetFile()
 
         -- print("ENTITY:RadioChannel | curSongTime: ", curSongTime)
         -- MsgC("Do we already have a static sound active?", Color(0, 255, 0), self.StaticSound, "\n")
