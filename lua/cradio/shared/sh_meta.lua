@@ -199,7 +199,7 @@ if CLIENT then
         channel:SetSong(curSong)
 
         -- COMMENT
-        curSong:SetStationChannel(channel)
+        curSong:SetRadioChannel(channel)
 
         -- COMMENT
         if !parent.IsCRadioEnt and shouldNotification:GetBool() then
@@ -310,7 +310,7 @@ if CLIENT then
 
             -- COMMENT
             if song and song:IsValid() then
-                song:SetStationChannel(nil)
+                song:SetRadioChannel(nil)
             end
 
             -- COMMENT

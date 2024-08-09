@@ -263,16 +263,16 @@ function SongClass:SetURL(url)
 	self.URL = url
 end
 
---- Gets our songs current station channel.
--- @return {IGModAudioChannel} our songs current station channel, can be NULL depending on channel status
-function SongClass:GetStationChannel()
-	return self.StationChannel
+--- Gets our songs current radio channel.
+-- @return {IGModAudioChannel} our songs current radio channel, can be NULL depending on channel status
+function SongClass:GetRadioChannel()
+	return self.RadioChannel
 end
 
---- Sets our songs current station channel.
--- @param {IGModAudioChannel} our songs current station channel
-function SongClass:SetStationChannel(acChannel)
-	self.StationChannel = acChannel
+--- Sets our songs current radio channel.
+-- @param {IGModAudioChannel} our songs current radio channel
+function SongClass:SetRadioChannel(acChannel)
+	self.RadioChannel = acChannel
 end
 
 --- Sets our songs cover path. This should only be used immediately after creation.

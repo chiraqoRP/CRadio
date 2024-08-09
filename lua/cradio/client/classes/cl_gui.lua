@@ -745,7 +745,7 @@ function GUIClass:DoPlayNotification(song)
         end
     end
 
-    local stationChannel = song:GetStationChannel()
+    local radioChannel = song:GetRadioChannel()
 
     function frame:Think()
         local client = LocalPlayer()
@@ -757,7 +757,7 @@ function GUIClass:DoPlayNotification(song)
             return
         end
 
-        local channelDead = !stationChannel or !stationChannel:IsValid()
+        local channelDead = !radioChannel or !radioChannel:IsValid()
 
         -- If our channel is removed, start the kill timer.
         if channelDead then
@@ -766,8 +766,8 @@ function GUIClass:DoPlayNotification(song)
             return
         end
 
-        local bufferedTime, seekTime = stationChannel:GetBufferedTime(), song:GetCurTime()
-        local isPlaying = stationChannel:GetState() == GMOD_CHANNEL_PLAYING
+        local bufferedTime, seekTime = radioChannel:GetBufferedTime(), song:GetCurTime()
+        local isPlaying = radioChannel:GetState() == GMOD_CHANNEL_PLAYING
 
         -- If our song is not playing, the buffering has halted, and it is not fully buffered, it has failed to load.
         if !isPlaying and bufferedTime == self.BufferedTime and bufferedTime < seekTime then
