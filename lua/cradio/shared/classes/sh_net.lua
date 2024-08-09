@@ -19,8 +19,9 @@ function NetClass:__tostring()
 	return classString
 end
 
--- CLIENT --> SERVER
--- Networks a play request (start/stop station) to the server.
+--- CLIENT --> SERVER
+--- Networks a play request (start/stop station) to the server.
+-- @param {string} the station we want to play, or nil if we want to stop
 function NetClass:SendPlayRequest(station, ent)
 	if SERVER then
 		return
@@ -58,10 +59,12 @@ function NetClass:SendPlayRequest(station, ent)
 	net.SendToServer()
 end
 
--- SERVER
--- Receives a play request (start/stop station) from a client.
+--- SERVER
+--- Receives a play request (start/stop station) from a client.
 function NetClass:ReceivePlayRequest(len, ply)
-	if CLIENT then return end
+	if CLIENT then
+		return
+	end
 
 	local isEnabling = net.ReadBool()
 	local station = nil
@@ -113,10 +116,14 @@ function NetClass:ReceivePlayRequest(len, ply)
 	end
 end
 
--- SERVER --> CLIENT
--- Networks every playlist to clients.
+--- SERVER --> CLIENT
+--- Networks all playlists to client(s).
+-- @param {string} the table of stations whose playlists we want to network
+-- @param {player/table} the player(s) we want to network to
 function NetClass:NetworkAllPlaylists(stations, ply)
-	if CLIENT then return end
+	if CLIENT then
+		return
+	end
 
 	local stationCount = #stations
 
@@ -165,8 +172,9 @@ function NetClass:NetworkAllPlaylists(stations, ply)
 	end
 end
 
--- SERVER --> CLIENT
--- Networks a playlist to clients.
+--- SERVER --> CLIENT
+--- Networks a playlist to all clients.
+-- @param {station} the station whose playlists we want to network
 function NetClass:NetworkPlaylist(station)
 	if CLIENT then return end
 
@@ -194,8 +202,8 @@ function NetClass:NetworkPlaylist(station)
 	net.Broadcast()
 end
 
--- CLIENT
--- Receives networked playlist(s).
+--- CLIENT
+--- Receives networked playlist(s).
 function NetClass:ReceivePlaylist(len)
 	if SERVER then return end
 
