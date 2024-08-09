@@ -50,10 +50,6 @@ function CoreClass:IsInitialized()
 	return self.Initialized
 end
 
-function CoreClass:GetInitializedTime()
-	return self.InitializedTime
-end
-
 function CoreClass:GetNet()
 	return self.Net
 end
