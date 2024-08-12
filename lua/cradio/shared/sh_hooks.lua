@@ -1,5 +1,5 @@
 if SERVER then
-    hook.Add("PlayerFullLoad", "CRadio.Net.SendPlaylists", function(ply)
+    hook.Add("PlayerFullLoad", "CRadio.NetworkPlaylists", function(ply)
         if ply:IsBot() then return end
 
         if !CRadio:IsInitialized() then

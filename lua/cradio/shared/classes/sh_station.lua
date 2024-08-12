@@ -427,9 +427,7 @@ function StationClass:RefreshPlaylist(isInitial)
 
 	-- Only network the playlist if it's a new one (refreshed), and it's not the initial one generated via core class' initialize.
 	if SERVER and (shouldRefresh and !isInitial) then
-		local cNet = CRadio:GetNet()
-
-		cNet:NetworkPlaylist(self)
+		self:DoNetwork()
 	end
 
 	-- COMMENT
@@ -515,6 +513,42 @@ function StationClass:UpdateRadioChannels()
 		    updatedEnts[parentEntity] = true
 		end)
 	end
+end
+
+function StationClass:DoNetwork(externalNet)
+	if CLIENT then
+		return
+	end
+
+	-- COMMENT
+	if !externalNet then
+		net.Start("CRadio.NetworkPlaylist")
+		net.WriteUInt(1, 8)
+	end
+
+	local playlist = self:GetPlaylist()
+	local songCount = #playlist
+
+	net.WriteString(self:GetName())
+
+	local curSong = self:GetCurrentSong()
+	local songEndTime = (curSong and curSong:GetEndTime()) or CurTime()
+
+	net.WriteFloat(songEndTime)
+	net.WriteUInt(songCount, 10)
+
+	for i = 1, songCount do
+		local song = playlist[i]
+
+		net.WriteUInt(song:GetID(), 16)
+	end
+
+	if !externalNet then
+		net.Broadcast()
+	end
+
+	-- COMMENT
+	return playlist
 end
 
 function StationClass:IsStation()

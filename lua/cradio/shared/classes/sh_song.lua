@@ -287,19 +287,19 @@ function SongClass:SetCover(coverPath)
 	self.Cover = coverPath
 end
 
---- Gets whether we're a StationClass object or not. This method is also present in StationClass and SubPlaylistClass.
+--- Gets whether we're a CRadioStationClass object or not. This method is also present in CRadioStationClass and CRadioSubPlaylistClass.
 -- @return {boolean} returns false
 function SongClass:IsStation()
 	return false
 end
 
---- Gets whether we're a SongClass object or not. This method is also present in StationClass and SubPlaylistClass.
+--- Gets whether we're a CRadioSongClass object or not. This method is also present in CRadioStationClass and CRadioSubPlaylistClass.
 -- @return {boolean} returns true
 function SongClass:IsSong()
 	return true
 end
 
---- Gets whether we're a SubPlaylistClass object or not. This method is also present in StationClass and SubPlaylistClass.
+--- Gets whether we're a CRadioSubPlaylistClass object or not. This method is also present in CRadioStationClass and CRadioSubPlaylistClass.
 -- @return {boolean} returns false
 function SongClass:IsSubPlaylist()
 	return false

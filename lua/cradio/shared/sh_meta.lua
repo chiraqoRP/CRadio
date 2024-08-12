@@ -1,8 +1,3 @@
-if SERVER then
-    util.AddNetworkString("CRadio.Station.NetworkPlaylist")
-    util.AddNetworkString("CRadio.Core.RequestStatusChange")
-end
-
 local ENTITY = FindMetaTable("Entity")
 
 function ENTITY:GetRadioOn()
