@@ -38,7 +38,7 @@ function NetClass:SendPlayRequest(station, ent)
 	-- print("[NetClass] - SendPlayRequest | isEnabling: ", isEnabling)
 
 	-- Request net message
-	net.Start("CRadio.Core.RequestStatusChange")
+	net.Start("CRadio.RequestStatusChange")
 	net.WriteBool(isEnabling)
 
 	if isEnabling then
@@ -128,29 +128,13 @@ function NetClass:NetworkAllPlaylists(stations, ply)
 	local stationCount = #stations
 
 	-- Playlist net message
-	net.Start("CRadio.Station.NetworkPlaylist")
+	net.Start("CRadio.NetworkPlaylist")
 	net.WriteUInt(stationCount, 8)
 
 	local anyValidPlaylists = false
 
 	for i = 1, stationCount do
-		local station = stations[i]
-		local playlist = station:GetPlaylist()
-		local songCount = #playlist
-
-		net.WriteString(station:GetName())
-
-		local curSong = station:GetCurrentSong()
-		local songEndTime = (curSong and curSong:GetEndTime()) or CurTime()
-
-		net.WriteFloat(songEndTime)
-		net.WriteUInt(songCount, 10)
-
-		for k = 1, songCount do
-			local song = playlist[k]
-
-			net.WriteUInt(song:GetID(), 16)
-		end
+		local playlist = station:DoNetwork(true)
 
 		if !anyValidPlaylists then
 			anyValidPlaylists = !table.IsEmpty(playlist)
@@ -172,36 +156,6 @@ function NetClass:NetworkAllPlaylists(stations, ply)
 	end
 end
 
---- SERVER --> CLIENT
---- Networks a playlist to all clients.
--- @param {station} the station whose playlists we want to network
-function NetClass:NetworkPlaylist(station)
-	if CLIENT then return end
-
-	-- Playlist net message
-	net.Start("CRadio.Station.NetworkPlaylist")
-	net.WriteUInt(1, 8)
-
-	local playlist = station:GetPlaylist()
-	local songCount = #playlist
-
-	net.WriteString(station:GetName())
-
-	local curSong = station:GetCurrentSong()
-	local songEndTime = (curSong and curSong:GetEndTime()) or CurTime()
-
-	net.WriteFloat(songEndTime)
-	net.WriteUInt(songCount, 10)
-
-	for k = 1, songCount do
-		local song = playlist[k]
-
-		net.WriteUInt(song:GetID(), 16)
-	end
-
-	net.Broadcast()
-end
-
 --- CLIENT
 --- Receives networked playlist(s).
 function NetClass:ReceivePlaylist(len)
@@ -217,7 +171,8 @@ function NetClass:ReceivePlaylist(len)
 		local songCount = net.ReadUInt(10)
 
 		for k = 1, songCount do
-			local song = songs[net.ReadUInt(16)]
+			local id = net.ReadUInt(16)
+			local song = songs[id]
 
 			playlist[k] = song
 		end
