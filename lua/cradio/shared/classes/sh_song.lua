@@ -243,12 +243,13 @@ function SongClass:GetFileExists()
 		return false
 	end
 
-	if self.FileExists == nil then
+	-- Only check if we have an actual filepath provided.
+	if self.FileExists == nil and string.IsValid(self.Filepath) then
 		-- Sound files are not automatically precached, so its fine to place them in sounds.
 		self.FileExists = file.Exists(self.Filepath, "GAME")
 	end
 
-	return self.FileExists
+	return self.FileExists or false
 end
 
 --- Gets our songs url. Be warned that the url can be invalid and cannot easily be checked without doing http.Fetch.
