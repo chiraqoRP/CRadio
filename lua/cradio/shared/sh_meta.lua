@@ -408,8 +408,10 @@ if CLIENT then
 end
 
 if CLIENT then
-    net.Receive("CRadio.Station.NetworkPlaylist", function(len)
+    net.Receive("CRadio.NetworkPlaylist", function(len)
 		local cNet = CRadio:GetNet()
+
+        MsgC(color_white, "[", Color(200, 0, 0), "CRadio", color_white, "] - CRadio.NetworkPlaylist received!", "\n")
 
 		cNet:ReceivePlaylist(len)
 	end)
@@ -434,7 +436,10 @@ if CLIENT then
         radioChannel:SetVolume(new)
     end)
 else
-	net.Receive("CRadio.Core.RequestStatusChange", function(len, ply)
+    util.AddNetworkString("CRadio.RequestStatusChange")
+    util.AddNetworkString("CRadio.NetworkPlaylist")
+
+	net.Receive("CRadio.RequestStatusChange", function(len, ply)
 		local cNet = CRadio:GetNet()
 
 		cNet:ReceivePlayRequest(len, ply)

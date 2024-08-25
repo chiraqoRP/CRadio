@@ -6,6 +6,8 @@ if SERVER then
             CRadio:Initialize()
         end
 
+        MsgC(color_white, "[", Color(200, 0, 0), "CRadio", color_white, "] - PlayerFullLoad ran!", "\n")
+
         local cNet = CRadio:GetNet()
 
         -- Networks all playlists to the connected player.
@@ -22,7 +24,9 @@ if SERVER then
         plyTable.m_LastVehicleEnter = CurTime()
 
         timer.Simple(FrameTime() + 0.1, function()
-            if !IsValid(ply) or !IsValid(veh) then return end
+            if !IsValid(ply) or !IsValid(veh) then
+                return
+            end
 
             local engineActive = veh:IsEngineActive()
 
@@ -43,7 +47,9 @@ if SERVER then
         plyTable.m_LastVehicleExit = exitTime
 
         timer.Simple(FrameTime() + 0.1, function()
-            if !IsValid(veh) then return end
+            if !IsValid(veh) then
+                return
+            end
 
             if wasDriver and !veh:IsEngineActive() then
                 veh:SetRadioOn(false)
@@ -58,8 +64,9 @@ if SERVER then
         local curTime = CurTime()
 
         -- If the driver enters/exits the vehicle within the last half-second, the vehicle hooks will handle the engine's status.
-        if curTime > (plyTable.m_LastVehicleEnter or 0) + 0.5 then return end
-        if curTime > (plyTable.m_LastVehicleExit or 0) + 0.5 then return end
+        if curTime > (plyTable.m_LastVehicleEnter or 0) + 0.5 or curTime > (plyTable.m_LastVehicleExit or 0) + 0.5 then
+            return
+        end
 
         veh:SetRadioOn(active)
     end)

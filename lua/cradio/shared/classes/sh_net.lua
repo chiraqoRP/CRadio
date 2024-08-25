@@ -134,6 +134,7 @@ function NetClass:NetworkAllPlaylists(stations, ply)
 	local anyValidPlaylists = false
 
 	for i = 1, stationCount do
+		local station = stations[i]
 		local playlist = station:DoNetwork(true)
 
 		if !anyValidPlaylists then
@@ -159,7 +160,9 @@ end
 --- CLIENT
 --- Receives networked playlist(s).
 function NetClass:ReceivePlaylist(len)
-	if SERVER then return end
+	if SERVER then
+		return
+	end
 
 	local songs = CRadio:GetSongs()
 	local stationCount = net.ReadUInt(8)
@@ -178,6 +181,9 @@ function NetClass:ReceivePlaylist(len)
 		end
 
 		local firstSong = playlist[1]
+
+		print("firstSong | StartTime: ", songEndTime - firstSong:GetLength())
+		print("firstSong | EndTime: ", songEndTime)
 
 		if firstSong then
 			firstSong:SetStartTime(songEndTime - firstSong:GetLength())
