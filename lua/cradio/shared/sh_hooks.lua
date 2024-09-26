@@ -92,7 +92,7 @@ else
                 -- The radio is set to off.
                 if !currentStation then return end
 
-                veh:RadioChannel(currentStation, false, true)
+                currentStation:RadioChannel(veh, false, true)
             end
         end)
     end)
@@ -148,7 +148,7 @@ else
 
         -- print("StationVarChanged | station: ", station)
 
-        ent:RadioChannel(station, false, true, true)
+        station:RadioChannel(ent, false, true, true)
     end
 
     local function RadioStateVarChanged(ent, name, old, new)
@@ -168,7 +168,7 @@ else
         if !new then
             ent:StopRadioChannel(true, 0.25)
         else
-            ent:RadioChannel(currentStation, false, true, true)
+            currentStation:RadioChannel(ent, false, true, true)
         end
     end
 

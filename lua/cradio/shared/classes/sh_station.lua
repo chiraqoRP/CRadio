@@ -467,6 +467,148 @@ function StationClass:UpdateTime(didRefresh)
 	self:SetNextPlaylistRefresh(newSong:GetEndTime() - CurTime())
 end
 
+local function StopStatic(ent)
+	if !IsValid(ent) then
+		return
+	end
+
+	local staticSnd = ent.StaticSound
+
+	if staticSnd then
+		staticSnd:FadeOut(0.5)
+
+		timer.Simple(0.5, function()
+			if staticSnd then
+				staticSnd:Stop()
+			end
+
+			ent.StaticSound = nil
+		end)
+	end
+end
+
+local m3DFlags = "3d mono %s"
+local urlFlags = "noplay noblock"
+local fileFlags = "noplay"
+local playFuncs = {}
+
+function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
+	if SERVER then
+		return
+	end
+
+	-- Enforce station validity.
+	if !self:IsValid() then
+		return
+	end
+
+	local curSong = self:GetCurrentSong()
+
+	-- Song must not be nil and be valid (have both name and url).
+	if !curSong or !curSong:IsValid() then
+		return
+	end
+
+	local curSongTime = curSong:GetCurTime()
+	local url = curSong:GetURL()
+	local fileValid, audioFile = curSong:GetFileExists(), curSong:GetFile()
+
+	-- print("ENTITY:RadioChannel | curSongTime: ", curSongTime)
+	-- MsgC("Do we already have a static sound active?", Color(0, 255, 0), self.StaticSound, "\n")
+
+	-- COMMENT
+	if playStatic and !ent.StaticSound then
+		local staticSnd = CreateSound(ent, "cradio/radio_change_static_looped.wav")
+		staticSnd:SetSoundLevel(120)
+		staticSnd:Play()
+
+		-- print("ENTITY:RadioChannel | staticSnd: ", staticSnd)
+
+		ent.StaticSound = staticSnd
+	end
+
+	-- COMMENT
+	local urlValid = string.Left(url, 4) == "http"
+
+	-- If the song's CurTime is below a reasonable margin (0-1.5 seconds), do not use noblock.
+	-- Doing this saves bandwidth and some performance (no need for a buffer callback).
+	local channelFlags = urlValid and curSongTime > 1.5 and urlFlags or fileFlags
+
+	-- COMMENT
+	if enable3D then
+		channelFlags = string.format(m3DFlags, channelFlags)
+	end
+
+	-- MsgC("ENTITY:RadioChannel | channelFlags: ", Color(0, 255, 0), channelFlags, "\n")
+
+	-- COMMENT
+	local playSong = audioFile and sound.PlayFile or (urlValid and sound.PlayURL)
+
+	if playSong then
+		playSong(audioFile or url, channelFlags, function(channel, errorID, errorName)
+			self:ProcessRadioChannel(ent, channel, curSongTime, doFade, callback)
+		end)
+	-- We have no audio file and there is no valid URL provided, so halt.
+	else
+		StopStatic(ent)
+
+		return
+	end
+end
+
+local shouldNotification = CreateClientConVar("cl_cradio_notification", 1, true, false, "", 0, 1)
+
+function StationClass:ProcessRadioChannel(ent, channel, time, enable3D, doFade, callback)
+	if !IsValid(channel) then
+		StopStatic(ent)
+
+		return
+	end
+
+	if !IsValid(ent) then
+		channel:Stop()
+
+		return
+	end
+
+	if channel:Is3D() then
+		channel:Set3DEnabled(true)
+	end
+
+	-- print("ProcessChannel | Buffering?: ", time > 2)
+
+	if time > 1.5 then
+		channel:DoBuffer(ent, self, time, doFade)
+	else
+		channel:Play()
+
+		if doFade then
+			channel:DoFade(0.5, 0, 1.0)
+		end
+	end
+
+	-- Cache the station object for comparison. 
+	channel:SetStation(self)
+
+	-- COMMENT
+	if !ent.IsCRadioEnt and shouldNotification:GetBool() then
+		local cGUI = CRadio:GetGUI()
+
+		-- COMMENT
+		cGUI:DoPlayNotification(self:GetCurrentSong(), channel)
+	end
+
+	-- COMMENT
+	ent:SetRadioChannel(channel)
+
+	-- COMMENT
+	self.RadioChannels[ent] = channel
+
+	if isfunction(callback) then
+		callback(ent, channel)
+	end
+end
+
 function StationClass:UpdateRadioChannels()
 	if SERVER then
 		return
@@ -509,9 +651,10 @@ function StationClass:UpdateRadioChannels()
 
 	    ent:StopRadioChannel()
 
-        ent:RadioChannel(self, is3D, false, false, function(newChannel, parentEntity, station)
-		    updatedEnts[parentEntity] = true
-		end)
+        self:RadioChannel(ent, is3D, false, false)
+
+		-- COMMENT:
+		updatedEnts[parentEntity] = true
 	end
 end
 

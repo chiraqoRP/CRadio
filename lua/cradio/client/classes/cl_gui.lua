@@ -589,7 +589,7 @@ local bufferFormat = "%.2f%%"
 
 --- Builds a "now playing" notification panel which is then removed after a variable time by multiple timers.
 -- @param {song} the song we want to use
-function GUIClass:DoPlayNotification(song)
+function GUIClass:DoPlayNotification(song, radioChannel)
     if !song or !song:IsValid() then
         return
     end
@@ -612,7 +612,7 @@ function GUIClass:DoPlayNotification(song)
             pFrame:Remove()
 
             -- Play the queued notification once the old notification is removed.
-            self2:DoPlayNotification(song)
+            self2:DoPlayNotification(song, radioChannel)
         end)
 
         self.NotificationPanel = nil
