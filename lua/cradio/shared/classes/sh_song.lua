@@ -14,6 +14,9 @@ function SongClass:__constructor(name)
 	self.Name = name
 	self.Length = 0
 
+	-- COMMENT
+	self.URL = ""
+
 	-- Our ID doesn't need to be cryptographically secure, it's only used for __eq operations.
 	self.ID = songsGenerated + 1
 

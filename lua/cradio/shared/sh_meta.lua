@@ -421,19 +421,28 @@ if CLIENT then
             return
         end
 
-        local vehicle = CLib.GetVehicle(LocalPlayer():GetVehicle())
+        local stations = CRX:GetStations()
 
-        if !IsValid(vehicle) then
+        if table.IsEmpty(stations) then
             return
         end
 
-        local radioChannel = vehicle:GetRadioChannel()
+        for i = 1, #stations do
+            local station = stations[i]
+            local radioChannels = station:GetRadioChannels()
 
-        if !radioChannel or !radioChannel:IsValid() or math.Round(old, 1) != math.Round(radioChannel:GetVolume(), 1) then
-            return
+            if table.IsEmpty(radioChannels) then
+                continue
+            end
+
+            for _, channel in pairs(radioChannels) do
+                if !channel or !channel:IsValid() or math.Round(old, 1) != math.Round(channel:GetVolume(), 1) then
+                    return
+                end
+        
+                channel:SetVolume(new)
+            end
         end
-
-        radioChannel:SetVolume(new)
     end)
 else
     util.AddNetworkString("CRadio.RequestStatusChange")

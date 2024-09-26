@@ -554,7 +554,7 @@ function GUIClass:BuildStationPanels()
         -- Sets our cursor to the center position of the station element.
         input.SetCursorPos(newX, newY)
 
-        -- HACK: COMMENT
+        -- COMMENT:
         stationPanel.isHovered = true
 
         lastHovered = math.max(0, i - 1)
