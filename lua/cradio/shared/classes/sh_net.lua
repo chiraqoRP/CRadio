@@ -59,12 +59,18 @@ function NetClass:SendPlayRequest(station, ent)
 	net.SendToServer()
 end
 
+local lastRequest = {}
+
 --- SERVER
 --- Receives a play request (start/stop station) from a client.
 function NetClass:ReceivePlayRequest(len, ply)
-	if CLIENT then
+	local curTime = CurTime()
+
+	if CLIENT or !IsValid(ply) or (lastRequest[ply] or 0) + 0.5 >= curTime then
 		return
 	end
+
+	lastRequest[ply] = curTime
 
 	local isEnabling = net.ReadBool()
 	local station = nil
