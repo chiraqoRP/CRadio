@@ -62,9 +62,6 @@ function GUIClass:Close(immediate)
     self.MenuOpen = false
 end
 
---- Gets the hovered element based on mouse position.
--- @param {integer} amount of elements
--- @return {integer} index of the hovered element
 function GUIClass:GetHovered(elementCount)
     local mx, my = gui.MousePos()
 
@@ -89,8 +86,6 @@ local offString = "Radio Off"
 local iconSize = 64
 local lastHovered = 0
 
---- Builds our GUI's DFrame.
--- @return {panel} the newly created dframe
 function GUIClass:BuildFrame()
     local self2 = self
 
@@ -240,9 +235,6 @@ function GUIClass:BuildFrame()
     return motherFrame
 end
 
---- Prevents our cursor from being on/within a specified circular radius of the screen's center.
--- @param {float} our mouse's x position
--- @return {float} our mouse's y position
 function GUIClass:IsCursorNearCenter(x, y)
     local mouseX, mouseY = x, y
     local centerX, centerY = self.CenterX, self.CenterY
@@ -269,9 +261,6 @@ function GUIClass:IsCursorNearCenter(x, y)
     return false
 end
 
---- Restricts our cursor to the bounds of a specified circular radius at the screen's center.
--- @param {float} our mouse's x position
--- @return {float} our mouse's y position
 function GUIClass:KeepCursorWithinBounds(x, y)
     -- Radius of the wheel plus the station panels approximate size (iconSize * 2.2).
     local circleRadius = 300 + (iconSize * 2.4)
@@ -300,8 +289,6 @@ end
 
 local minIcon = 16
 
---- Calculates the size of elements based on the amount of them.
--- @param {integer} amount of elements
 local function CalcElementSize(count)
     if count > 12 then
         iconSize = 64 - (minIcon - minIcon / (count - 12))
@@ -313,7 +300,6 @@ local function CalcElementSize(count)
     end
 end
 
---- Constructs our elements and stores them in our GUI's elements table.
 function GUIClass:BuildElements()
     local stations = CRadio:GetStations(true)
     local count = #stations + 1
@@ -385,11 +371,6 @@ local offMatPath = "cradio/icons/radio_off.png"
 local gradientLeftMat, gradientRightMat = Material("vgui/gradient-l"), Material("vgui/gradient-r")
 local panelsGenerated = 0
 
---- Builds a station panel based on the element table provided.
--- @param {station} our panels desired station
--- @param {table} our constructed element table
--- @param {boolean} whether the panel is the off button or not.
--- @return {panel} our newly created station panel
 function GUIClass:BuildStationPanel(station, element, isOffButton)
     if !element then
         return
@@ -515,7 +496,6 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
     return stationPanel
 end
 
---- Builds all our station panels based on the element(s) calculated in BuildElements.
 function GUIClass:BuildStationPanels()
     if !IsValid(self.Frame) then
         return
@@ -587,8 +567,6 @@ local backgroundColor = Color(40, 40, 40, 150)
 local bufferTextColor = Color(255, 255, 255, 0)
 local bufferFormat = "%.2f%%"
 
---- Builds a "now playing" notification panel which is then removed after a variable time by multiple timers.
--- @param {song} the song we want to use
 function GUIClass:DoPlayNotification(song, radioChannel)
     if !song or !song:IsValid() then
         return
@@ -827,7 +805,7 @@ surface.CreateFont("CRadio.Main", {
     extended = true
 })
 
-surface.CreateFont( "CRadio.MainBold", {
+surface.CreateFont("CRadio.MainBold", {
     font = "Tahoma",
     size = 18 * scaleMul,
     weight = 800 * scaleMul,

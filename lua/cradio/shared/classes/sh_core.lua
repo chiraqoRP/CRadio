@@ -46,34 +46,22 @@ function CoreClass:__tostring()
 	return classString
 end
 
---- Whether CRadio has been initialized (stations created) or not.
--- @return {boolean} initialization status
 function CoreClass:IsInitialized()
 	return self.Initialized
 end
 
---- Gets our CRadioNetClass object.
--- @return {cnet} our CRadioNetClass object
 function CoreClass:GetNet()
 	return self.Net
 end
 
---- Gets our CRadioGUIClass object.
--- @return {cgui} our CRadioGUIClass object
 function CoreClass:GetGUI()
 	return self.GUI
 end
 
---- Gets all installed stations.
--- @param {boolean} whether the table should be sequential or have name keys
--- @return {table} our station table
 function CoreClass:GetStations(sequential)
 	return (sequential and self.SequentialStations) or self.Stations
 end
 
---- Gets an installed station via its name.
--- @param {string} our desired stations name
--- @return {station} the station if present, nil otherwise
 function CoreClass:GetStation(name)
 	if !string.IsValid(name) then
 		return
@@ -82,9 +70,6 @@ function CoreClass:GetStation(name)
 	return self.Stations[name]
 end
 
---- Creates a new station.
--- @param {string} our new stations desired name, must be a valid string
--- @return {station} the station if created or the station with the same name if one is found
 function CoreClass:Station(name)
 	-- Without a name, we can't possibly know what category the invoker wants.
 	if !string.IsValid(name) then
@@ -109,15 +94,10 @@ function CoreClass:Station(name)
 	return newStation
 end
 
---- Gets all created songs.
--- @return {table} our song table
 function CoreClass:GetSongs()
 	return self.Songs
 end
 
---- Gets a created song via its numerical id.
--- @param {integer} our desired songs id
--- @return {song} the song if present, nil otherwise
 function CoreClass:GetSong(id)
 	-- Without an id, we can't possibly know which song to index.
 	if !isnumber(id) then
@@ -127,9 +107,6 @@ function CoreClass:GetSong(id)
 	return self.Songs[id]
 end
 
---- Creates a new song.
--- @param {string} our new songs desired name, must be a valid string
--- @return {song} the song if created
 function CoreClass:Song(name)
 	-- Without a name, the song cannot possibly be valid.
 	if !string.IsValid(name) then
@@ -145,9 +122,6 @@ function CoreClass:Song(name)
 	return newSong
 end
 
---- Creates a new subplaylist.
--- @param {string} our new subplaylists desired name, must be a valid string
--- @return {subplaylist} the subplaylist if created
 function CoreClass:SubPlaylist(name)
 	-- Without a name, the sub-playlist cannot possibly be valid.
 	if !string.IsValid(name) then
