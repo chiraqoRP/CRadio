@@ -21,7 +21,6 @@ end
 
 --- CLIENT --> SERVER
 --- Networks a play request (start/stop station) to the server.
--- @param {string} the station we want to play, or nil if we want to stop
 function NetClass:SendPlayRequest(station, ent)
 	if SERVER then
 		return
@@ -124,8 +123,6 @@ end
 
 --- SERVER --> CLIENT
 --- Networks all playlists to client(s).
--- @param {string} the table of stations whose playlists we want to network
--- @param {player/table} the player(s) we want to network to
 function NetClass:NetworkAllPlaylists(stations, ply)
 	if CLIENT then
 		return
