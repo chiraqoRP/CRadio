@@ -4,10 +4,8 @@ function ENTITY:GetRadioOn()
     return self:GetNW2Bool("CRadio.RadioState", false)
 end
 
-if SERVER then
-    function ENTITY:SetRadioOn(on)
-        self:SetNW2Bool("CRadio.RadioState", on)
-    end
+function ENTITY:SetRadioOn(on)
+    self:SetNW2Bool("CRadio.RadioState", on)
 end
 
 function ENTITY:GetCurrentStation()
@@ -16,12 +14,10 @@ function ENTITY:GetCurrentStation()
     return CRadio:GetStation(name)
 end
 
-if SERVER then
-    function ENTITY:SetCurrentStation(station)
-        local name = (station and station:GetName()) or nil
+function ENTITY:SetCurrentStation(station)
+    local name = (station and station:GetName()) or nil
 
-        self:SetNW2String("CRadio.Station", name)
-    end
+    self:SetNW2String("CRadio.Station", name)
 end
 
 if CLIENT then
@@ -82,11 +78,11 @@ if CLIENT then
             channel:Stop()
         end
 
-        if !IsValid(ent) then
+        if !IsValid(parent) then
             return
         end
 
-        local staticSnd = ent.StaticSound
+        local staticSnd = parent.StaticSound
 
         if staticSnd then
             staticSnd:FadeOut(0.5)
@@ -96,13 +92,13 @@ if CLIENT then
                     staticSnd:Stop()
                 end
 
-                ent.StaticSound = nil
+                parent.StaticSound = nil
             end)
         end
     end
 
-    local defaultVol = CreateClientConVar("cl_cradio_volume", 1.0, true, false, "", 0, 1.0)
-    local failureDelay = CreateClientConVar("cl_cradio_failuredelay", 5, true, false, "", 5, 30)
+    local defaultVol = GetConVar("cl_cradio_volume")
+    local failureDelay = GetConVar("cl_cradio_failuredelay")
     local hookBufferFormat = "CRadio.Buffer-%i"
 
     function AUDIOCHANNEL:DoBuffer(parent, station, time, doFade, bufferCallback)
@@ -167,6 +163,8 @@ if CLIENT then
             if bufferedTime >= seekTime then
                 self:SetTime(seekTime, true)
                 self:Play()
+
+                print("doFade: ", doFade)
 
                 if doFade then
                     self:DoFade(0.5, 0, defaultVol:GetFloat())
@@ -248,35 +246,4 @@ if CLIENT then
             wasValid = isValid
         end)
     end
-end
-
-if CLIENT then
-    cvars.AddChangeCallback("cl_cradio_volume", function(name, old, new)
-        if old == new then
-            return
-        end
-
-        local stations = CRX:GetStations()
-
-        if table.IsEmpty(stations) then
-            return
-        end
-
-        for i = 1, #stations do
-            local station = stations[i]
-            local radioChannels = station:GetRadioChannels()
-
-            if table.IsEmpty(radioChannels) then
-                continue
-            end
-
-            for _, channel in pairs(radioChannels) do
-                if !channel or !channel:IsValid() or math.Round(old, 1) != math.Round(channel:GetVolume(), 1) then
-                    return
-                end
-        
-                channel:SetVolume(new)
-            end
-        end
-    end)
 end

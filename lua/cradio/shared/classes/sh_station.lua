@@ -519,7 +519,7 @@ function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
 	-- COMMENT
 	if playStatic and !ent.StaticSound then
 		local staticSnd = CreateSound(ent, "cradio/radio_change_static_looped.wav")
-		staticSnd:SetSoundLevel(120)
+		staticSnd:SetSoundLevel(80)
 		staticSnd:Play()
 
 		-- print("ENTITY:RadioChannel | staticSnd: ", staticSnd)
@@ -540,6 +540,7 @@ function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
 	end
 
 	-- MsgC("ENTITY:RadioChannel | channelFlags: ", Color(0, 255, 0), channelFlags, "\n")
+	-- MsgC("ENTITY:RadioChannel | doFade: ", Color(0, 255, 0), doFade, "\n")
 
 	-- COMMENT
 	local playSong = audioFile and sound.PlayFile or (urlValid and sound.PlayURL)
@@ -556,9 +557,9 @@ function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
 	end
 end
 
-local shouldNotification = CreateClientConVar("cl_cradio_notification", 1, true, false, "", 0, 1)
+local shouldNotification = GetConVar("cl_cradio_notification")
 
-function StationClass:ProcessRadioChannel(ent, channel, time, enable3D, doFade, callback)
+function StationClass:ProcessRadioChannel(ent, channel, time, doFade, callback)
 	if !IsValid(channel) then
 		StopStatic(ent)
 
@@ -651,10 +652,10 @@ function StationClass:UpdateRadioChannels()
 
 	    ent:StopRadioChannel()
 
-        self:RadioChannel(ent, is3D, false, false)
+        self:RadioChannel(ent, is3D)
 
 		-- COMMENT:
-		updatedEnts[parentEntity] = true
+		updatedEnts[ent] = true
 	end
 end
 

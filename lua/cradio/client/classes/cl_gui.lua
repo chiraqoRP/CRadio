@@ -208,11 +208,13 @@ function GUIClass:BuildFrame()
         -- Calculates which element is currently selected.
         self:DoElementHover()
 
-        local curTime = CurTime()
+        local sysTime = SysTime()
 
-        if (nextThink or 0) > curTime then return end
+        if (nextThink or 0) > sysTime then
+            return
+        end
 
-        nextThink = curTime + 0.1
+        nextThink = sysTime + 0.1
 
         -- Caches our station/song strings when needed, this reduces __index calls.
         self:InvalidateText()
@@ -556,6 +558,8 @@ function GUIClass:BuildStationPanels()
     end
 end
 
+local failureDelay = GetConVar("cl_cradio_failuredelay")
+
 -- We only scale down the notification panel and fonts if our width is below 2560.
 local screenWidth = ScrW()
 local scaleMul = screenWidth / 2560 or 1.0
@@ -572,14 +576,11 @@ function GUIClass:DoPlayNotification(song, radioChannel)
         return
     end
 
-    -- We have to cache this outside of __constructor because of lua add/include order.
-    self.FailureDelay = self.FailureDelay or GetConVar("cl_cradio_failuredelay")
-
     local self2 = self
     local y = 64 * scaleMul
     local oldFrame = self.NotificationPanel
 
-    if IsValid(oldFrame) then
+    if IsValid(oldFrame) and oldFrame:IsValid() then
         -- Stop any active animations on the old notification.
         oldFrame:Stop()
 
@@ -723,8 +724,6 @@ function GUIClass:DoPlayNotification(song, radioChannel)
         end
     end
 
-    local radioChannel = song:GetRadioChannel()
-
     function frame:Think()
         local client = LocalPlayer()
 
@@ -749,11 +748,11 @@ function GUIClass:DoPlayNotification(song, radioChannel)
 
         -- If our song is not playing, the buffering has halted, and it is not fully buffered, it has failed to load.
         if !isPlaying and bufferedTime == self.BufferedTime and bufferedTime < seekTime then
-            self.StalledTime = self.StalledTime or CurTime()    
+            self.StalledTime = self.StalledTime or CurTime()
 
             -- DoBuffering waits before considering it a failed load and removing the channel.
             -- We do the same with slightly less delay so we can inform the user.
-            if (CurTime() - self.StalledTime) >= math.min(4, self2.FailureDelay:GetFloat() - 1) then
+            if (CurTime() - self.StalledTime) >= math.min(4, failureDelay:GetFloat() - 1) then
                 self.BufferingFailed = true
 
                 return

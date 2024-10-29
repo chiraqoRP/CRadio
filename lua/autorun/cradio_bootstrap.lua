@@ -1,4 +1,6 @@
 -- CSLua
+AddCSLuaFile("cradio/shared/sh_convars.lua")
+
 if SERVER then
     AddCSLuaFile("cradio/client/classes/cl_gui.lua")
 end
@@ -12,6 +14,8 @@ AddCSLuaFile("cradio/shared/sh_hooks.lua")
 AddCSLuaFile("cradio/shared/sh_meta.lua")
 
 -- Includes
+include("cradio/shared/sh_convars.lua")
+
 if CLIENT then
     include("cradio/client/classes/cl_gui.lua")
 end

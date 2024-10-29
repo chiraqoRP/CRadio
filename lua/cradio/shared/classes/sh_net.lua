@@ -185,8 +185,8 @@ function NetClass:ReceivePlaylist(len)
 
 		local firstSong = playlist[1]
 
-		print("firstSong | StartTime: ", songEndTime - firstSong:GetLength())
-		print("firstSong | EndTime: ", songEndTime)
+		-- print("firstSong | StartTime: ", songEndTime - firstSong:GetLength())
+		-- print("firstSong | EndTime: ", songEndTime)
 
 		if firstSong then
 			firstSong:SetStartTime(songEndTime - firstSong:GetLength())

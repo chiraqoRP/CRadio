@@ -1,6 +1,8 @@
 if SERVER then
     hook.Add("PlayerFullLoad", "CRadio.NetworkPlaylists", function(ply)
-        if ply:IsBot() then return end
+        if ply:IsBot() then
+            return
+        end
 
         if !CRadio:IsInitialized() then
             CRadio:Initialize()
@@ -14,7 +16,7 @@ if SERVER then
         cNet:Initialize(ply)
     end)
 
-    hook.Add("PlayerEnteredVehicle", "CRadio.Core.ControlRadio", function(ply, veh, role)
+    hook.Add("PlayerEnteredVehicle", "CRadio.ControlRadio", function(ply, veh, role)
         -- Get the real vehicle entity in case we're using simfphys/LVS.
         veh = CLib.GetVehicle(veh)
 
@@ -36,9 +38,13 @@ if SERVER then
         end)
     end)
 
-    hook.Add("PlayerLeaveVehicle", "CRadio.Core.ControlRadio", function(ply, veh)
+    hook.Add("PlayerLeaveVehicle", "CRadio.ControlRadio", function(ply, veh)
         -- Get the real vehicle entity in case we're using simfphys/LVS.
         veh = CLib.GetVehicle(veh)
+
+        if !IsValid(veh) then
+            return
+        end
 
         local plyTable = ply:GetTable()
         local exitTime = CurTime()
@@ -58,7 +64,7 @@ if SERVER then
     end)
 
     -- FIXME: Has issues with simfphys
-    hook.Add("simfphysOnEngine", "CRadio.Core.ControlRadio", function(veh, active, ignoresettings)
+    hook.Add("simfphysOnEngine", "CRadio.ControlRadio", function(veh, active, ignoresettings)
         local driver = veh:GetDriver()
         local plyTable = driver:GetTable()
         local curTime = CurTime()
@@ -71,7 +77,7 @@ if SERVER then
         veh:SetRadioOn(active)
     end)
 else
-    hook.Add("PlayerEnteredVehicle", "CRadio.Core.ControlRadio", function(ply, veh)
+    hook.Add("PlayerEnteredVehicle", "CRadio.ControlRadio", function(ply, veh)
         -- Get the real vehicle entity in case we're using simfphys/LVS.
         veh = CLib.GetVehicle(veh)
 
@@ -81,7 +87,9 @@ else
         plyTable.m_LastVehicleEnter = CurTime()
 
         timer.Simple(engine.ServerFrameTime() + 0.01, function()
-            if !IsValid(veh) then return end
+            if !IsValid(veh) then
+                return
+            end
 
             local switchedSeats = CurTime() < (plyTable.m_LastVehicleExit or 0) + 0.5
             local engineActive = veh:IsEngineActive()
@@ -90,14 +98,16 @@ else
                 local currentStation = veh:GetCurrentStation()
 
                 -- The radio is set to off.
-                if !currentStation then return end
+                if !currentStation then
+                    return
+                end
 
                 currentStation:RadioChannel(veh, false, true)
             end
         end)
     end)
 
-    hook.Add("PlayerLeaveVehicle", "CRadio.Core.ControlRadio", function(ply, veh)
+    hook.Add("PlayerLeaveVehicle", "CRadio.ControlRadio", function(ply, veh)
         local cGUI = CRadio:GetGUI()
 
         cGUI:Close()
@@ -111,7 +121,9 @@ else
         plyTable.m_LastVehicleExit = exitTime
 
         timer.Simple(engine.ServerFrameTime() + 0.01, function()
-            if !IsValid(veh) then return end
+            if !IsValid(veh) then
+                return
+            end
 
             local inVehicle = ply:InVehicle()
             local switchedSeats = inVehicle and CurTime() < exitTime + 0.5
@@ -175,7 +187,7 @@ else
     local stationVar = "CRadio.Station"
     local radioVar = "CRadio.RadioState"
 
-    hook.Add("EntityNetworkedVarChanged", "CRadio.Core.RadioChange", function(ent, name, old, new)
+    hook.Add("EntityNetworkedVarChanged", "CRadio.RadioChange", function(ent, name, old, new)
         -- print("isOurVar? ", name == stationVar or name == radioVar)
 
         -- If the var changed isn't our NW2 var, we do nothing.
@@ -188,7 +200,7 @@ else
         end
     end)
 
-    hook.Add("EntityRemoved", "CRadio.Core.ClearSounds", function(ent, fullUpdate)
+    hook.Add("EntityRemoved", "CRadio.ClearSounds", function(ent, fullUpdate)
         if fullUpdate or !ent:IsVehicle() then
             return
         end
@@ -209,7 +221,9 @@ else
     end)
 
     hook.Add("PlayerButtonUp", "CRadio.GUI.Release", function(ply, button)
-        if !(button == KEY_SLASH and IsFirstTimePredicted()) then return end
+        if !(button == KEY_SLASH and IsFirstTimePredicted()) then
+            return
+        end
 
         local cGUI = CRadio:GetGUI()
 
@@ -217,14 +231,16 @@ else
     end)
 
     hook.Add("PlayerButtonDown", "CRadio.GUI.Press", function(ply, button)
-        if !(button == KEY_SLASH and IsFirstTimePredicted()) then return end
+        if !(button == KEY_SLASH and IsFirstTimePredicted()) then
+            return
+        end
 
         local cGUI = CRadio:GetGUI()
 
         cGUI:Open()
     end)
 
-    local overrideCVar = CreateClientConVar("cl_cradio_gui_spawnmenu", 1, true, false, "Enables or disables overriding the spawnmenu.", 0, 1)
+    local overrideCVar = GetConVar("cl_cradio_gui_spawnmenu")
 
     hook.Add("OnSpawnMenuOpen", "CRadio_GUI_Open", function()
         if !overrideCVar:GetBool() then

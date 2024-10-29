@@ -219,14 +219,6 @@ function SongClass:SetURL(url)
 	self.URL = url
 end
 
-function SongClass:GetRadioChannel()
-	return self.RadioChannel
-end
-
-function SongClass:SetRadioChannel(acChannel)
-	self.RadioChannel = acChannel
-end
-
 function SongClass:GetCover()
 	return self.Cover
 end
