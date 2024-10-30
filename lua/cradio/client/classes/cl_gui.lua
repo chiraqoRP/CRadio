@@ -610,11 +610,10 @@ function GUIClass:DoPlayNotification(song, radioChannel)
     local name, artist, release = song:GetName(), song:GetArtist(), song:GetRelease()
 
     surface.SetFont("CRadio.MainBold")
-    local nTextWidth, nTextHeight = surface.GetTextSize(name)
+    local _, nTextHeight = surface.GetTextSize(name)
 
     surface.SetFont("CRadio.Main")
-    local aTextWidth, aTextHeight = surface.GetTextSize(artist)
-    local rTextWidth = 0
+    local _, aTextHeight = surface.GetTextSize(artist)
 
     if release then
         rTextWidth, _ = surface.GetTextSize(release)
@@ -623,7 +622,6 @@ function GUIClass:DoPlayNotification(song, radioChannel)
     -- Material expects a string, so we provide an empty (nil) one if our song has no cover.
     -- We also set it to smooth if we're scaling, as IMaterial scaling is awful and smooth improves it slightly.
     local coverMat, _ = Material(song:GetCover() or "", scaleMul != 1.0 and "smooth" or "")
-    local scrollOffset = 0
 
     function frame:Paint(w, h)
         draw.RoundedBox(4, 0, 0, w, h, backgroundColor)
@@ -661,7 +659,6 @@ function GUIClass:DoPlayNotification(song, radioChannel)
 
         surface.SetFont("CRadio.MainBold")
 
-        local textRange = w - (6 + textOffset)
         local nTextOffset = textOffset
 
         -- Draws the song name in bold lettering.

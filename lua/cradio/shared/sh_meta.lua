@@ -34,9 +34,6 @@ if CLIENT then
         self.acRadioChannel = channel
     end
 
-
-    local channelSongs = {}
-
     function ENTITY:StopRadioChannel(doFade, fadeLength)
         local channel = self.acRadioChannel
 
@@ -60,7 +57,7 @@ if CLIENT then
 
     local AUDIOCHANNEL = FindMetaTable("IGModAudioChannel")
 
-    -- HACK: COMMENT
+    -- HACK: IGModAudioChannel can't be indexed like a table, so we have to do this.
     local channelStations = {}
 
     function AUDIOCHANNEL:GetStation()

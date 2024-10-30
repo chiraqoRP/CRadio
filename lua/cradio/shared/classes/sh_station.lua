@@ -283,7 +283,7 @@ end
 
 function StationClass:GeneratePlaylist()
 	if CLIENT then
-		return 
+		return
 	end
 
 	-- Empty our playlist table.
@@ -463,8 +463,6 @@ function StationClass:UpdateTime(didRefresh)
 
 	newSong:SetStartTime(curTime)
 
-	local songEndTime = newSong:GetEndTime()
-
 	-- print("StationClass:UpdateTime | NextPlaylistRefresh set to ", curTime + length, " at ", CurTime())
 
 	self:SetNextPlaylistRefresh(newSong:GetEndTime() - CurTime())
@@ -493,7 +491,6 @@ end
 local m3DFlags = "3d mono %s"
 local urlFlags = "noplay noblock"
 local fileFlags = "noplay"
-local playFuncs = {}
 
 function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
 	if SERVER then
@@ -546,7 +543,7 @@ function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
 	-- MsgC("ENTITY:RadioChannel | doFade: ", Color(0, 255, 0), doFade, "\n")
 
 	-- COMMENT
-	local playSong = audioFile and sound.PlayFile or (urlValid and sound.PlayURL)
+	local playSong = fileValid and sound.PlayFile or (urlValid and sound.PlayURL) or false
 
 	if playSong then
 		playSong(audioFile or url, channelFlags, function(channel, errorID, errorName)
@@ -589,6 +586,8 @@ function StationClass:ProcessRadioChannel(ent, channel, shouldBuffer, doFade, ca
 
 		if doFade then
 			channel:DoFade(0.5, 0, defaultVol:GetFloat())
+		else
+			channel:SetVolume(defaultVol:GetFloat())
 		end
 	end
 
