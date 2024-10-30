@@ -63,17 +63,7 @@ if SERVER then
         end)
     end)
 
-    -- FIXME: Has issues with simfphys
     hook.Add("simfphysOnEngine", "CRadio.ControlRadio", function(veh, active, ignoresettings)
-        local driver = veh:GetDriver()
-        local plyTable = driver:GetTable()
-        local curTime = CurTime()
-
-        -- If the driver enters/exits the vehicle within the last half-second, the vehicle hooks will handle the engine's status.
-        if curTime > (plyTable.m_LastVehicleEnter or 0) + 0.5 or curTime > (plyTable.m_LastVehicleExit or 0) + 0.5 then
-            return
-        end
-
         veh:SetRadioOn(active)
     end)
 else
@@ -171,7 +161,7 @@ else
             return
         end
 
-        local currentStation = CRadio:GetStation(ent:GetCurrentStation())
+        local currentStation = ent:GetCurrentStation()
 
         if new and !currentStation then
             return
