@@ -101,7 +101,7 @@ if CLIENT then
     local failureDelay = GetConVar("cl_cradio_failuredelay")
     local hookBufferFormat = "CRadio.Buffer-%i"
 
-    function AUDIOCHANNEL:DoBuffer(parent, station, time, doFade, bufferCallback)
+    function AUDIOCHANNEL:DoBuffer(parent, station, doFade, bufferCallback)
         local identifier = nil
         local thinkHooks = hook.GetTable().Think
 
@@ -111,10 +111,9 @@ if CLIENT then
         -- If there's already a think hook with this identifier, retry.
         until !thinkHooks[identifier]
 
-        local startTime = CurTime()
         local lastCheck, stalledTime = 0, nil
         local curSong = station:GetCurrentSong()
-        local timeElapsed, songLength = 0, curSong:GetLength()
+        local songLength = curSong:GetLength()
         local wasValid, lastBufferedTime = false, 0
 
         hook.Add("Think", identifier, function()
@@ -125,9 +124,6 @@ if CLIENT then
             end
 
             lastCheck = curTime
-            timeElapsed = curTime - startTime
-
-            -- print("DoBuffering | timeElapsed: ", timeElapsed)
 
             local isValid = self and self:IsValid() and IsValid(parent)
 
@@ -140,17 +136,18 @@ if CLIENT then
                 return
             end
 
-            local bufferedTime = self:GetBufferedTime()
-            local seekTime = math.Clamp(time + timeElapsed, 0, songLength)
+            local bufferedTime = math.Round(self:GetBufferedTime(), 1)
+            local seekTime = math.Clamp(curSong:GetCurTime(), 0, songLength)
 
             -- print("DoBuffering | bufferedTime: ", bufferedTime)
+            -- print("DoBuffering | songCurTime: ", curSong:GetCurTime())
             -- print("DoBuffering | seekTime: ", seekTime)
 
             -- COMMENT
             if bufferedTime == lastBufferedTime and bufferedTime < seekTime then
                 stalledTime = stalledTime or CurTime()
 
-                if (CurTime() - stalledTime) >= failureDelay:GetFloat() then
+                if bufferedTime == lastBufferedTime and (CurTime() - stalledTime) >= failureDelay:GetFloat() then
                     -- MsgC(Color(203, 26, 219), "ProcessChannel | Channel buffering stalled, seeking stopped!\n")
 
                     KillBufferHook(identifier, self, parent)
@@ -164,7 +161,7 @@ if CLIENT then
                 self:SetTime(seekTime, true)
                 self:Play()
 
-                print("doFade: ", doFade)
+                -- print("doFade: ", doFade)
 
                 if doFade then
                     self:DoFade(0.5, 0, defaultVol:GetFloat())

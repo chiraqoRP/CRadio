@@ -743,7 +743,7 @@ function GUIClass:DoPlayNotification(song, radioChannel)
             return
         end
 
-        local bufferedTime, seekTime = radioChannel:GetBufferedTime(), song:GetCurTime()
+        local bufferedTime, seekTime = math.Round(radioChannel:GetBufferedTime(), 1), song:GetCurTime()
         local isPlaying = radioChannel:GetState() == GMOD_CHANNEL_PLAYING
 
         -- If our song is not playing, the buffering has halted, and it is not fully buffered, it has failed to load.
@@ -752,7 +752,7 @@ function GUIClass:DoPlayNotification(song, radioChannel)
 
             -- DoBuffering waits before considering it a failed load and removing the channel.
             -- We do the same with slightly less delay so we can inform the user.
-            if (CurTime() - self.StalledTime) >= math.min(4, failureDelay:GetFloat() - 1) then
+            if !isPlaying and bufferedTime == self.BufferedTime and (CurTime() - self.StalledTime) >= math.min(4, failureDelay:GetFloat() - 1) then
                 self.BufferingFailed = true
 
                 return
@@ -769,7 +769,7 @@ function GUIClass:DoPlayNotification(song, radioChannel)
             self.DrawBuffering = true
         end
 
-        self.BufferedTime = bufferedTime
+        self.BufferedTime = radioChannel:GetBufferedTime()
         self.BufferProgress = bufferProgress
 
         -- If the channel is playing and we haven't started the kill timer, do so.

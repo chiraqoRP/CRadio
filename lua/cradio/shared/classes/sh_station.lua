@@ -139,14 +139,17 @@ function StationClass:GetNextPlaylistRefresh()
 	return self.NextPlaylistRefresh or CurTime()
 end
 
-function StationClass:SetNextPlaylistRefresh(delay)
-	-- print("SetNextPlaylistRefresh timer set to ", delay, " for station ", self.Name, "!")
+function StationClass:SetNextPlaylistRefresh(nextRefresh)
+	-- HACK: IGModAudioChannel takes time to initialize (roughly ~0.3s) and there should be a silent gap between tracks anyways.
+	nextRefresh = nextRefresh + 1.0
 
-	self.NextPlaylistRefresh = CurTime() + delay
+	-- print("SetNextPlaylistRefresh timer set to ", nextRefresh - CurTime(), " for station ", self.Name, "!")
+
+	self.NextPlaylistRefresh = nextRefresh
+
+	local delay = math.max(nextRefresh - CurTime(), 0)
 
 	timer.Create(self.TimerName, delay, 1, function()
-		-- print("SetNextPlaylistRefresh timer called at ", CurTime(), ", actually supposed to be called at ", self.NextPlaylistRefresh)
-
 		self:RefreshPlaylist()
 	end)
 end
@@ -530,9 +533,9 @@ function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
 	-- COMMENT
 	local urlValid = string.Left(url, 4) == "http"
 
-	-- If the song's CurTime is below a reasonable margin (0-1.5 seconds), do not use noblock.
+	-- If the song's CurTime is below a reasonable margin (0 <--> 0.5 seconds), do not use noblock.
 	-- Doing this saves bandwidth and some performance (no need for a buffer callback).
-	local channelFlags = urlValid and curSongTime > 1.5 and urlFlags or fileFlags
+	local channelFlags = urlValid and curSongTime > 0.5 and urlFlags or fileFlags
 
 	-- COMMENT
 	if enable3D then
@@ -547,7 +550,7 @@ function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
 
 	if playSong then
 		playSong(audioFile or url, channelFlags, function(channel, errorID, errorName)
-			self:ProcessRadioChannel(ent, channel, curSongTime, doFade, callback)
+			self:ProcessRadioChannel(ent, channel, urlValid and curSongTime > 0.5, doFade, callback)
 		end)
 	-- We have no audio file and there is no valid URL provided, so halt.
 	else
@@ -558,8 +561,9 @@ function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
 end
 
 local shouldNotification = GetConVar("cl_cradio_notification")
+local defaultVol = GetConVar("cl_cradio_volume")
 
-function StationClass:ProcessRadioChannel(ent, channel, time, doFade, callback)
+function StationClass:ProcessRadioChannel(ent, channel, shouldBuffer, doFade, callback)
 	if !IsValid(channel) then
 		StopStatic(ent)
 
@@ -578,13 +582,13 @@ function StationClass:ProcessRadioChannel(ent, channel, time, doFade, callback)
 
 	-- print("ProcessChannel | Buffering?: ", time > 2)
 
-	if time > 1.5 then
-		channel:DoBuffer(ent, self, time, doFade)
+	if shouldBuffer then
+		channel:DoBuffer(ent, self, doFade)
 	else
 		channel:Play()
 
 		if doFade then
-			channel:DoFade(0.5, 0, 1.0)
+			channel:DoFade(0.5, 0, defaultVol:GetFloat())
 		end
 	end
 
