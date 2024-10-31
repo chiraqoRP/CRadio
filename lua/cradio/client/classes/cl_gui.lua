@@ -20,7 +20,7 @@ function GUIClass:Open()
     -- Caches our current vehicle to save on performance.
     self.Vehicle = CLib.GetVehicle()
 
-    if !self.Vehicle:IsEngineActive() then
+    if !self.Vehicle:IsEngineActive() or !self.Vehicle:GetRadioOn() then
         return
     end
 
@@ -564,9 +564,8 @@ local failureDelay = GetConVar("cl_cradio_failuredelay")
 local screenWidth = ScrW()
 local scaleMul = screenWidth / 2560 or 1.0
 
--- recordMat and armMat are fallbacks used when a song doesn't have a valid cover.
+-- recordMat is the fallback used when a song doesn't have a valid cover.
 local recordMat = Material("cradio/icons/notification_record.png", "smooth mips")
-local armMat = Material("cradio/icons/notification_arm.png", "smooth mips")
 local backgroundColor = Color(40, 40, 40, 150)
 local bufferTextColor = Color(255, 255, 255, 0)
 local bufferFormat = "%.2f%%"
@@ -629,7 +628,7 @@ function GUIClass:DoPlayNotification(song, radioChannel)
         -- :scammer:
         surface.SetDrawColor(255, 255, 255, 255)
 
-        local textOffset = 128 + 16
+        local textOffset = (128 * scaleMul) + (16 * scaleMul)
         local drawHeight = 128 * scaleMul
 
         if coverMat and !coverMat:IsError() then
@@ -642,18 +641,15 @@ function GUIClass:DoPlayNotification(song, radioChannel)
             -- Height is enforced, but we scale our width based on the width-to-height ratio.
             surface.DrawTexturedRect(6 * scaleMul, 8 * scaleMul, drawWidth, drawHeight)
 
-            textOffset = drawWidth + 16
+            textOffset = drawWidth + (16 * scaleMul)
         else
-            self.RecordAngle = (self.RecordAngle or 0) + FrameTime() * 60
+            local recordHeight = 112 * scaleMul
+
+            self.RecordAngle = (self.RecordAngle or 0) + FrameTime() * 32
 
             DisableClipping(true)
             surface.SetMaterial(recordMat)
-            surface.DrawTexturedRectRotated(6 + drawHeight / 2, 8 + drawHeight / 2, drawHeight, drawHeight, self.RecordAngle)
-
-            self.ArmAngle = (self.ArmAngle or 0) + FrameTime() * 4
-
-            surface.SetMaterial(armMat)
-            surface.DrawTexturedRectRotated(6 * scaleMul + (38 * scaleMul) / 2, 8 * scaleMul + (94 * scaleMul) / 2, 38 * scaleMul, 94 * scaleMul, self.ArmAngle)
+            surface.DrawTexturedRectRotated((14 * scaleMul) + recordHeight / 2, (16 * scaleMul) + recordHeight / 2, recordHeight, recordHeight, self.RecordAngle)
             DisableClipping(false)
         end
 
@@ -663,12 +659,12 @@ function GUIClass:DoPlayNotification(song, radioChannel)
 
         -- Draws the song name in bold lettering.
         surface.SetTextColor(255, 255, 255)
-        surface.SetTextPos(nTextOffset, 10)
+        surface.SetTextPos(nTextOffset, (10 * scaleMul))
         surface.DrawText(name)
 
         -- Draws the separator between name and release/artist.
         surface.SetDrawColor(255, 255, 255, 255)
-        surface.DrawRect(nTextOffset - 2, nTextHeight + 10 + 4, w - nTextOffset - 2, 6)
+        surface.DrawRect(nTextOffset - (2 * scaleMul), nTextHeight + (14 * scaleMul), w - nTextOffset - (2 * scaleMul), 6)
 
         surface.SetFont("CRadio.Main")
 
@@ -676,7 +672,7 @@ function GUIClass:DoPlayNotification(song, radioChannel)
 
         -- Draws the artist in regular lettering.
         surface.SetTextColor(200, 200, 200)
-        surface.SetTextPos(aTextOffset, nTextHeight + 10 + 6 + 4 + 4)
+        surface.SetTextPos(aTextOffset, nTextHeight + (24 * scaleMul))
         surface.DrawText(artist)
 
         -- Draws the release (if present) in regular lettering.
@@ -684,7 +680,7 @@ function GUIClass:DoPlayNotification(song, radioChannel)
             local rTextOffset = textOffset
 
             surface.SetTextColor(200, 200, 200)
-            surface.SetTextPos(rTextOffset, nTextHeight + 10 + 6 + 4 + 4 + aTextHeight + 4)
+            surface.SetTextPos(rTextOffset, nTextHeight + (24 * scaleMul) + aTextHeight + (4 * scaleMul))
             surface.DrawText(release)
         end
 
@@ -715,7 +711,7 @@ function GUIClass:DoPlayNotification(song, radioChannel)
 
             -- Draws our progress bar.
             surface.SetDrawColor(255, 255, 255, 50 * alphaMul)
-            surface.DrawRect(0, h - 4, bufferProgress * w, 4)
+            surface.DrawRect(0, h - (4 * scaleMul), bufferProgress * w, (4 * scaleMul))
 
             self.AlphaMult = alphaMul
         end
