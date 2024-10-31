@@ -20,8 +20,11 @@ if SERVER then
         -- Get the real vehicle entity in case we're using simfphys/LVS.
         veh = CLib.GetVehicle(veh)
 
+        if simfphys and simfphys.IsCar(veh) then
+            return
+        end
+
         local plyTable = ply:GetTable()
-        local wasEngineActive = veh:IsEngineActive()
 
         plyTable.m_LastVehicleEnter = CurTime()
 
@@ -30,9 +33,7 @@ if SERVER then
                 return
             end
 
-            local engineActive = veh:IsEngineActive()
-
-            if ply:IsDriver(veh) and (!wasEngineActive and engineActive) then
+            if ply:IsDriver(veh) and veh:IsEngineActive() then
                 veh:SetRadioOn(true)
             end
         end)
@@ -42,7 +43,7 @@ if SERVER then
         -- Get the real vehicle entity in case we're using simfphys/LVS.
         veh = CLib.GetVehicle(veh)
 
-        if !IsValid(veh) then
+        if !IsValid(veh) or (simfphys and simfphys.IsCar(veh)) then
             return
         end
 
@@ -130,6 +131,10 @@ else
 
         -- If we're not in the vehicle, don't play/stop any radio channel.
         if !isCustomEnt and CLib.GetVehicle(ply:GetVehicle()) != ent then
+            return
+        end
+
+        if !ent:GetRadioOn() then
             return
         end
 
@@ -260,6 +265,12 @@ else
         local ply = LocalPlayer()
 
         if !ply:InVehicle() or !ply:IsDriver() then
+            return
+        end
+
+        local vehicle = CLib.GetVehicle()
+
+        if !vehicle:GetRadioOn() then
             return
         end
 
