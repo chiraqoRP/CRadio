@@ -28,7 +28,7 @@ if SERVER then
 
         plyTable.m_LastVehicleEnter = CurTime()
 
-        timer.Simple(FrameTime() + 0.1, function()
+        timer.Simple(FrameTime() + 0.75, function()
             if !IsValid(ply) or !IsValid(veh) then
                 return
             end
@@ -53,7 +53,7 @@ if SERVER then
 
         plyTable.m_LastVehicleExit = exitTime
 
-        timer.Simple(FrameTime() + 0.75, function()
+        timer.Simple(FrameTime() + 0.1, function()
             if !IsValid(veh) then
                 return
             end
@@ -73,29 +73,23 @@ else
         veh = CLib.GetVehicle(veh)
 
         local plyTable = ply:GetTable()
-        local wasEngineActive = veh:IsEngineActive()
+        local enterTime = CurTime()
 
-        plyTable.m_LastVehicleEnter = CurTime()
+        plyTable.m_LastVehicleEnter = enterTime
 
-        timer.Simple(engine.ServerFrameTime() + 0.01, function()
-            if !IsValid(veh) then
+        local switchedSeats = enterTime < (plyTable.m_LastVehicleExit or 0) + 0.5
+        local radioChannel = veh:GetRadioChannel()
+
+        if !switchedSeats and !(radioChannel and radioChannel:IsValid()) and veh:GetRadioOn() then
+            local currentStation = veh:GetCurrentStation()
+
+            -- The radio is set to off.
+            if !currentStation then
                 return
             end
 
-            local switchedSeats = CurTime() < (plyTable.m_LastVehicleExit or 0) + 0.5
-            local engineActive = veh:IsEngineActive()
-
-            if !switchedSeats and (wasEngineActive and engineActive) then
-                local currentStation = veh:GetCurrentStation()
-
-                -- The radio is set to off.
-                if !currentStation then
-                    return
-                end
-
-                currentStation:RadioChannel(veh, false, true)
-            end
-        end)
+            currentStation:RadioChannel(veh, false, true)
+        end
     end)
 
     hook.Add("PlayerLeaveVehicle", "CRadio.ControlRadio", function(ply, veh)
@@ -111,7 +105,7 @@ else
 
         plyTable.m_LastVehicleExit = exitTime
 
-        timer.Simple(engine.ServerFrameTime() + 0.01, function()
+        timer.Simple(engine.ServerFrameTime() + 0.1, function()
             if !IsValid(veh) then
                 return
             end
