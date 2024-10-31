@@ -173,7 +173,7 @@ function NetClass:ReceivePlaylist(len)
 	for i = 1, stationCount do
 		local station = CRadio:GetStation(net.ReadString())
 		local playlist = station:GetPlaylist()
-		local songEndTime = net.ReadFloat() - CurTime()
+		local songEndTime = net.ReadFloat()
 		local songCount = net.ReadUInt(10)
 
 		for k = 1, songCount do

@@ -465,7 +465,7 @@ function StationClass:UpdateTime(didRefresh)
 
 	-- print("StationClass:UpdateTime | NextPlaylistRefresh set to ", curTime + length, " at ", CurTime())
 
-	self:SetNextPlaylistRefresh(newSong:GetEndTime() - CurTime())
+	self:SetNextPlaylistRefresh(newSong:GetEndTime())
 end
 
 local function StopStatic(ent)
@@ -625,7 +625,7 @@ function StationClass:UpdateRadioChannels()
 		return
 	end
 
-	local cacheCheck = radioChannels[LocalPlayer():GetVehicle()]
+	local cacheCheck = radioChannels[CLib.GetVehicle()]
 
 	if cacheCheck and cacheCheck:IsValid() then
 		MsgC("How much time was left on song for station [", Color(200, 0, 0), self.Name, color_white, "]: ", Color(0, 255, 0), cacheCheck:GetLength() - cacheCheck:GetTime(), color_white, " seconds!")
