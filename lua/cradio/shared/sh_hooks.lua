@@ -53,7 +53,7 @@ if SERVER then
 
         plyTable.m_LastVehicleExit = exitTime
 
-        timer.Simple(FrameTime() + 0.1, function()
+        timer.Simple(FrameTime() + 0.75, function()
             if !IsValid(veh) then
                 return
             end
