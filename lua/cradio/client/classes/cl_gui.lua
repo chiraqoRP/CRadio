@@ -436,8 +436,8 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
 
         -- Calculates and caches our circles so their vertices aren't recalculated every frame.
         self.Circle = CalcCircle(radius_m / 2, radius_m / 2, iconSize)
-        self.OutlineLeftCircle = CalcOutlineCircle(radius_m / 2, radius_m / 2, iconSize, 4, gradientLeft, gradientLeftMat)
-        self.OutlineRightCircle = CalcOutlineCircle(radius_m / 2, radius_m / 2, iconSize, 4, gradientRight, gradientRightMat)
+        self.OutlineLeftCircle = CalcOutlineCircle(radius_m / 2, radius_m / 2, iconSize + 4, 4, gradientLeft, gradientLeftMat)
+        self.OutlineRightCircle = CalcOutlineCircle(radius_m / 2, radius_m / 2, iconSize + 4, 4, gradientRight, gradientRightMat)
 
         -- Creates our station's icon material, deleted when GUIClass:Close is called.
         self.Icon = Material(iconPath, "smooth mips")
