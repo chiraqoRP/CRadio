@@ -121,10 +121,9 @@ else
 
     local function StationVarChanged(ent, name, old, new)
         local ply = LocalPlayer()
-        local isCustomEnt = ent.IsCRadioEnt
 
         -- If we're not in the vehicle, don't play/stop any radio channel.
-        if !isCustomEnt and CLib.GetVehicle(ply:GetVehicle()) != ent then
+        if CLib.GetVehicle(ply:GetVehicle()) != ent then
             return
         end
 
