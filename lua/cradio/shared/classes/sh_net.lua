@@ -48,7 +48,6 @@ function NetClass:SendPlayRequest(station, ent)
 
 	local isCustomEnt = isentity(ent)
 
-	-- COMMENT:
 	net.WriteBool(isCustomEnt)
 
 	if isCustomEnt then
@@ -81,7 +80,6 @@ function NetClass:ReceivePlayRequest(len, ply)
 
 	-- print("[NetClass] - ReceivePlayRequest | stationName/station: ", stationName, station)
 
-	-- COMMENT:
 	local ent = ply:GetVehicle()
 	local isCustomEnt = net.ReadBool()
 
@@ -91,7 +89,7 @@ function NetClass:ReceivePlayRequest(len, ply)
 
 	-- print("[NetClass] - ReceivePlayRequest | isCustomEnt/ent: ", isCustomEnt, ent)
 
-	-- COMMENT
+	-- Fuck off skid.
 	if isCustomEnt and !ent.IsCRadioEnt then
 		return
 	end
@@ -99,7 +97,7 @@ function NetClass:ReceivePlayRequest(len, ply)
 	if isCustomEnt then
 		local processPlayRequest = ent.ProcessPlayRequest
 
-		-- COMMENT
+		-- Make sure the custom entity actually defines a proper play method.
 		if isfunction(processPlayRequest) then
 			processPlayRequest(ent, ply, station)
 		end
@@ -109,7 +107,6 @@ function NetClass:ReceivePlayRequest(len, ply)
 			return
 		end
 
-		-- COMMENT
 		local vehicle = CLib.GetVehicle(ent)
 
 		-- If the vehicle's engine isn't active, the radio can't be on.
@@ -196,7 +193,8 @@ function NetClass:ReceivePlaylist(len)
 
 		station:SetNextPlaylistRefresh(songEndTime)
 
-		-- COMMENT
+		-- Calling this on CLIENT in a timer will result in nothing happening (because the playlist is empty!) and the station just doing nothing.
+		-- This fixes that albeit by introducing some unavoidable delay to the song transition.
 		station:UpdateRadioChannels()
 	end
 end

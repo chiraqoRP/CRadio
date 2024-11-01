@@ -14,7 +14,8 @@ function SongClass:__constructor(name)
 	self.Name = name
 	self.Length = 0
 
-	-- COMMENT
+	-- Without this, some string ops will cause halting errors.
+	-- Its the users responsibility to check URL validity anyways.
 	self.URL = ""
 
 	-- Our ID doesn't need to be cryptographically secure, it's only used for __eq operations.
@@ -84,17 +85,17 @@ function SongClass:SetArtist(artist)
 end
 
 function SongClass:GetRelease()
-	-- COMMENT
+	-- If we have no defined release string and no valid parent, return nothing.
 	if !self.Release and !self.Parent then
 		return
 	end
 
-	-- COMMENT
+	-- If we have no defined release string but a valid subplaylist parent, redirect to it's GetRelease method.
 	if !self.Release and self.Parent and self.Parent:IsSubPlaylist() then
 		return self.Parent:GetRelease()
 	end
 
-	-- COMMENT
+	-- If our release var is a true boolean, it's a self-titled release (ie: single, title track).
 	if self.Release == true then
 		return self.Name
 	end

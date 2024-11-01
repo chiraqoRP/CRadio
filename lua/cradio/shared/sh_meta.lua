@@ -38,7 +38,6 @@ if CLIENT then
         local channel = self.acRadioChannel
 
         if channel and channel:IsValid() then
-            -- COMMENT
             channel:SetStation(nil)
 
             if doFade then
@@ -57,7 +56,7 @@ if CLIENT then
 
     local AUDIOCHANNEL = FindMetaTable("IGModAudioChannel")
 
-    -- HACK: IGModAudioChannel can't be indexed like a table, so we have to do this.
+    -- WORKAROUND: IGModAudioChannel can't be indexed like a table, so we have to do this.
     local channelStations = {}
 
     function AUDIOCHANNEL:GetStation()
@@ -140,10 +139,11 @@ if CLIENT then
             -- print("DoBuffering | songCurTime: ", curSong:GetCurTime())
             -- print("DoBuffering | seekTime: ", seekTime)
 
-            -- COMMENT
+            -- If our song hasn't buffered enough and hasn't moved since the last tick, we mark it as stalled.
             if bufferedTime == lastBufferedTime and bufferedTime < seekTime then
                 stalledTime = stalledTime or CurTime()
 
+                -- If it remains stalled and doesn't advance within x defined seconds, we stop buffering and kill the channel.
                 if bufferedTime == lastBufferedTime and (CurTime() - stalledTime) >= failureDelay:GetFloat() then
                     -- MsgC(Color(203, 26, 219), "ProcessChannel | Channel buffering stalled, seeking stopped!\n")
 
@@ -170,10 +170,10 @@ if CLIENT then
                     bufferCallback(self, parent, station)
                 end
 
-                -- print("ProcessChannel | Buffering finished, time set to ", time, "!")
+                -- print("ProcessChannel | Buffering finished, time set to ", self:GetTime(), "!")
 
-                -- COMMENT
-                KillBufferHook(identifier, nil, parent)
+                -- We don't want to kill the channel, so we feed it nil/false where the channel arg is.
+                KillBufferHook(identifier, false, parent)
 
                 return
             end
@@ -220,7 +220,7 @@ if CLIENT then
 
             -- print("AUDIOCHANNEL:DoFade | newVolume: ", newVolume)
 
-            -- COMMENT
+            -- Hooks can sometimes execute after removal, so we check if the fading is already complete.
             if isValid and !didFade then
                 self:SetVolume(newVolume)
             end
