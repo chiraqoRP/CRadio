@@ -16,20 +16,10 @@ function StationClass:__constructor(name)
 	-- Playlist randomization is enabled by default.
 	self.ShouldRandomize = true
 
-	-- COMMENT
 	self.Songs = {}
-
-	-- COMMENT
 	self.SubPlaylists = {}
-
-	-- COMMENT
 	self.Playlist = {}
-
-	-- COMMENT
 	self.SongCount = 0
-
-	-- Players that are listening to this station.
-	self.Listeners = {}
 
 	-- Stores all of the client's radio channels.
 	if CLIENT then
@@ -150,6 +140,8 @@ function StationClass:SetNextPlaylistRefresh(nextRefresh)
 	local delay = math.max(nextRefresh - CurTime(), 0)
 
 	timer.Create(self.TimerName, delay, 1, function()
+		-- print("timer for ", self, " triggered at CurTime:", CurTime(), ". supposed to be triggered at ", nextRefresh)
+
 		self:RefreshPlaylist()
 	end)
 end
@@ -402,7 +394,7 @@ function StationClass:RefreshPlaylist(isInitial)
 	-- Remove the finished song from our playlist.
 	local lastSong = table.remove(self.Playlist, 1)
 
-	-- print(self.Name, " playlist refreshed at ", CurTime(), ". ", lastSong and lastSong:GetName() or "nothing", " removed!")
+	-- print(self.Name, " playlist refreshed at CurTime:", CurTime(), ". ", lastSong and lastSong:GetName() or "nothing", " removed!")
 
 	self.LastSong = lastSong
 
@@ -433,7 +425,8 @@ function StationClass:RefreshPlaylist(isInitial)
 		self:DoNetwork()
 	end
 
-	-- COMMENT
+	-- If our playlist was just refreshed, its empty on CLIENT and nothing will happen if we try to update our channels.
+	-- Refer to NetClass:ReceivePlaylist for the solution.
 	if CLIENT and !isInitial and !shouldRefresh then
 		-- TODO: Check if net_fakelag affects timer desync
 		self:UpdateRadioChannels()
@@ -493,7 +486,7 @@ local urlFlags = "noplay noblock"
 local fileFlags = "noplay"
 
 function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
-	if SERVER then
+	if SERVER or !IsValid(ent) then
 		return
 	end
 
@@ -516,7 +509,7 @@ function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
 	-- print("ENTITY:RadioChannel | curSongTime: ", curSongTime)
 	-- MsgC("Do we already have a static sound active?", Color(0, 255, 0), self.StaticSound, "\n")
 
-	-- COMMENT
+	-- Only create the sound if we don't already have one playing.
 	if playStatic and !ent.StaticSound then
 		local staticSnd = CreateSound(ent, "cradio/radio_change_static_looped.wav")
 		staticSnd:SetSoundLevel(80)
@@ -527,14 +520,14 @@ function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
 		ent.StaticSound = staticSnd
 	end
 
-	-- COMMENT
+	-- Checks if our URL is a non-empty string, and if it is a valid URL (ie https://urlhere.domain).
 	local urlValid = string.Left(url, 4) == "http"
 
 	-- If the song's CurTime is below a reasonable margin (0 <--> 0.5 seconds), do not use noblock.
 	-- Doing this saves bandwidth and some performance (no need for a buffer callback).
 	local channelFlags = urlValid and curSongTime > 0.5 and urlFlags or fileFlags
 
-	-- COMMENT
+	-- 3D only works properly with the mono channel flag.
 	if enable3D then
 		channelFlags = string.format(m3DFlags, channelFlags)
 	end
@@ -542,15 +535,21 @@ function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
 	-- MsgC("ENTITY:RadioChannel | channelFlags: ", Color(0, 255, 0), channelFlags, "\n")
 	-- MsgC("ENTITY:RadioChannel | doFade: ", Color(0, 255, 0), doFade, "\n")
 
-	-- COMMENT
+	-- If a filepath is defined and the file exists, we use that.
+	-- If no file is present, fallback to the URL if valid.
+	-- Otherwise, stop the static sound and print an error.
 	local playSong = fileValid and sound.PlayFile or (urlValid and sound.PlayURL) or false
 
 	if playSong then
 		playSong(audioFile or url, channelFlags, function(channel, errorID, errorName)
+			-- print("channel initialized: ", SysTime())
+
 			self:ProcessRadioChannel(ent, channel, urlValid and curSongTime > 0.5, doFade, callback)
 		end)
-	-- We have no audio file and there is no valid URL provided, so halt.
+	-- We have no audio file and there is no valid URL provided, so halt and print an error.
 	else
+		ErrorNoHalt(self, " - No file present or valid URL for ", curSong, ".")
+
 		StopStatic(ent)
 
 		return
@@ -589,23 +588,22 @@ function StationClass:ProcessRadioChannel(ent, channel, shouldBuffer, doFade, ca
 		else
 			channel:SetVolume(defaultVol:GetFloat())
 		end
+
+		StopStatic(ent)
 	end
 
 	-- Cache the station object for comparison. 
 	channel:SetStation(self)
 
-	-- COMMENT
+	-- Notifications can be really intrusive for third-party entities.
 	if !ent.IsCRadioEnt and shouldNotification:GetBool() then
 		local cGUI = CRadio:GetGUI()
 
-		-- COMMENT
 		cGUI:DoPlayNotification(self:GetCurrentSong(), channel)
 	end
 
-	-- COMMENT
 	ent:SetRadioChannel(channel)
 
-	-- COMMENT
 	self.RadioChannels[ent] = channel
 
 	if isfunction(callback) then
@@ -628,7 +626,11 @@ function StationClass:UpdateRadioChannels()
 	local cacheCheck = radioChannels[CLib.GetVehicle()]
 
 	if cacheCheck and cacheCheck:IsValid() then
-		MsgC("How much time was left on song for station [", Color(200, 0, 0), self.Name, color_white, "]: ", Color(0, 255, 0), cacheCheck:GetLength() - cacheCheck:GetTime(), color_white, " seconds!")
+		MsgC(color_white, "How much time was left on song for station [", Color(200, 0, 0), self.Name, color_white, "]: ", Color(0, 255, 0), self.LastSong:GetLength() - cacheCheck:GetTime(), color_white, " seconds!\n")
+
+		MsgC(color_white, "Length (Def):   ", Color(0, 255, 0), self.LastSong:GetLength(), color_white, " seconds!\n")
+		MsgC(color_white, "Length (Act):   ", Color(0, 255, 0), cacheCheck:GetLength(), color_white, " seconds!\n")
+		MsgC(color_white, "Time:           ", Color(0, 255, 0), cacheCheck:GetTime(), color_white, " seconds!\n")
 	end
 
 	local updatedEnts = {}
@@ -657,7 +659,7 @@ function StationClass:UpdateRadioChannels()
 
         self:RadioChannel(ent, is3D)
 
-		-- COMMENT:
+		-- Mark the entity as already updated so we don't do so again.
 		updatedEnts[ent] = true
 	end
 end
@@ -667,7 +669,6 @@ function StationClass:DoNetwork(externalNet)
 		return
 	end
 
-	-- COMMENT
 	if !externalNet then
 		net.Start("CRadio.NetworkPlaylist")
 		net.WriteUInt(1, 8)
@@ -694,7 +695,6 @@ function StationClass:DoNetwork(externalNet)
 		net.Broadcast()
 	end
 
-	-- COMMENT
 	return playlist
 end
 
@@ -738,6 +738,47 @@ function StationClass:PrintInfo()
 			MsgC(color_white, "-----------------------\n")
 		end
 	end
+end
+
+function StationClass:DebugTime()
+	local song = self.Playlist[1]
+
+	if !IsValid(song) then
+		return
+	end
+
+	MsgC(color_white, "-----------------------\n")
+	MsgC(color_white, "Song / ",  orangeColor, song, color_white, "\n")
+
+	local channelCurTime = 0
+
+	if CLIENT then
+		channelCurTime = CLib.GetVehicle():GetRadioChannel():GetTime()
+	end
+
+	local timerCurTime = song:GetLength() - timer.TimeLeft(self.TimerName)
+
+	MsgC(color_white, "CurTime:              ", greenColor, math.Round(CurTime(), 4), color_white, " seconds!\n")
+	MsgC(color_white, "songCurTime:          ", greenColor, math.Round(song:GetCurTime(), 4), color_white, " seconds!\n")
+
+	if CLIENT then
+		MsgC(color_white, "Channel Time:         ", greenColor, math.Round(channelCurTime, 4), color_white, " seconds!\n")
+	end
+
+	MsgC(color_white, "timerCurTime:         ", greenColor, math.Round(timerCurTime, 4), color_white, " seconds!\n")
+
+	if CLIENT then
+		MsgC(color_white, "Deviation from timer: ", greenColor, math.Round(timerCurTime - channelCurTime, 4), color_white, " seconds!\n")
+	end
+
+	MsgC(color_white, "Time until end:       ", greenColor, math.Round(math.abs(CurTime() - self:GetNextPlaylistRefresh()), 4), color_white, " seconds!\n")
+	MsgC(color_white, "Song Length (Def):    ", greenColor, math.Round(song:GetLength(), 4), color_white, " seconds!\n")
+
+	if CLIENT then
+		MsgC(color_white, "Song Length (Act):    ", greenColor, math.Round(CLib.GetVehicle():GetRadioChannel():GetLength(), 4), color_white, " seconds!\n")
+	end
+
+	MsgC(color_white, "-----------------------\n")
 end
 
 setmetatable(StationClass, {
