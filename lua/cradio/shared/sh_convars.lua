@@ -24,12 +24,34 @@ if CLIENT then
             end
 
             for _, channel in pairs(radioChannels) do
-                if !channel or !channel:IsValid() or math.Round(old, 2) != math.Round(channel:GetVolume(), 2) then
+                if !channel or !channel:IsValid() or math.Round(old, 3) != math.Round(channel:GetVolume(), 3) then
                     return
                 end
         
                 channel:SetVolume(new)
             end
+        end
+    end)
+
+    concommand.Add("cl_cradio_stop_static", function(ply, cmd, args, argStr)
+        if ply != LocalPlayer() then
+            return
+        end
+
+        local vehicle = CLib.GetVehicle()
+
+        if !IsValid(vehicle) then
+            return
+        end
+
+        local staticSnd = vehicle.StaticSound
+
+        if staticSnd then
+            if staticSnd then
+                staticSnd:Stop()
+            end
+
+            vehicle.StaticSound = nil
         end
     end)
 else
