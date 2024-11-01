@@ -29,6 +29,8 @@ function GUIClass:Open()
         return
     end
 
+    surface.PlaySound("cradio/ui_open.wav")
+
     -- Mark the menu as open to prevent panel spam.
     self.MenuOpen = true
 
@@ -60,6 +62,8 @@ function GUIClass:Close(immediate)
     else
         self.Frame:FancyClose()
     end
+
+    surface.PlaySound("cradio/ui_open.wav")
 
     self.MenuOpen = false
 end
@@ -427,6 +431,7 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
         local stationName = station and station:GetName() or tostring(panelsGenerated)
 
         self.TimerName = string.format(timerFormat, stationName)
+        self.InitTime = SysTime()
 
         panelsGenerated = panelsGenerated + 1
     end
@@ -434,7 +439,7 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
     stationPanel:PostInit()
 
     function stationPanel:Paint(w, h)
-        local isHovered = self.isHovered and !self.isHoverOverriden
+        local isHovered = self.isHovered
 
         -- Returns a ascending/descending float to use with lerp for alpha fade.
         local buf = self:CalculateFade(2, isHovered)
@@ -500,6 +505,11 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
 
         -- There can only be one "off" button so we make it a separate var.
         self2.IsOffHovered = isOffButton
+
+        -- WORKAROUND: Prevent the hover sound from overlapping the open sound triggered in our class' Open method.
+        if (SysTime() - self.InitTime) > 0.25 then
+            surface.PlaySound("cradio/ui_hover.wav")
+        end
 
         -- If this isn't a "radio off" button, we have a valid current station, and its the same as this station, do nothing.
         if !isOffButton and IsValid(currentStation) and currentStation:GetName() == station:GetName() then
