@@ -53,6 +53,8 @@ function GUIClass:Close(immediate)
         return
     end
 
+    self:DoCloseRequest()
+
     if immediate then
         self.Frame:Close()
     else
@@ -60,6 +62,26 @@ function GUIClass:Close(immediate)
     end
 
     self.MenuOpen = false
+end
+
+function GUIClass:DoCloseRequest()
+    if !IsValid(self.Vehicle) then
+        return
+    end
+
+    local currentStation = self.Vehicle:GetCurrentStation()
+
+    if currentStation == self.HoveredStation then
+        return
+    end
+
+    local cNet = CRadio:GetNet()
+
+    if self.IsOffHovered and IsValid(currentStation) then
+        cNet:SendPlayRequest(false)
+    else
+        cNet:SendPlayRequest(self.HoveredStation)
+    end
 end
 
 function GUIClass:GetHovered(elementCount)
