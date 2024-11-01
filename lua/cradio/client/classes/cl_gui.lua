@@ -197,6 +197,21 @@ function GUIClass:BuildFrame()
                 lastHoveredPanel:OnUnhover()
             end
 
+            local children = self:GetChildren()
+            local childCount = 5 + self.ElementCount
+
+            -- HACK: All station panels other than the currently hovered one are set to NOT hovered.
+            -- This is because of a problem with the way we set the default hovered panel in BuildStationPanels.
+            for i = 5, childCount do
+                local child = children[i]
+
+                if !IsValid(child) or child == hoveredPanel then
+                    continue
+                end
+
+                child.isHovered = false
+            end
+
             lastHovered = hoveredElement
         end
     end
@@ -568,7 +583,7 @@ function GUIClass:BuildStationPanels()
         -- Sets our cursor to the center position of the station element.
         input.SetCursorPos(newX, newY)
 
-        -- COMMENT:
+        -- Forces the current station's panel to be hovered.
         stationPanel.isHovered = true
 
         lastHovered = math.max(0, i - 1)
