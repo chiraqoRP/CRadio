@@ -4,7 +4,7 @@ SongClass.__index = SongClass
 local songsGenerated = 0
 
 function SongClass:__constructor(name)
-	if songsGenerated > 65535 then
+	if songsGenerated > 262143 then
 		ErrorNoHaltWithStack("[CRadio] | You have hit the song limit!")
 
 		return

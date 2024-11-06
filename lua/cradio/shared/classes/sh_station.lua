@@ -4,7 +4,7 @@ StationClass.__index = StationClass
 local stationsGenerated = 0
 
 function StationClass:__constructor(name)
-	if stationsGenerated > 65535 then
+	if stationsGenerated > 255 then
 		ErrorNoHaltWithStack("[CRadio] | You have hit the station limit!")
 
 		return
