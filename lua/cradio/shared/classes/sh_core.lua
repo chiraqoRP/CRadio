@@ -70,7 +70,7 @@ function CoreClass:GetStation(name)
 	return self.Stations[name]
 end
 
-function CoreClass:Station(name)
+function CoreClass:Station(name, stationStruct)
 	-- Without a name, we can't possibly know what category the invoker wants.
 	if !string.IsValid(name) then
 		return
@@ -84,7 +84,7 @@ function CoreClass:Station(name)
 	end
 
 	-- Create our new station and set it's name.
-	local newStation = CRadioStationClass(name)
+	local newStation = CRadioStationClass(name, stationStruct)
 
 	-- Adds station to our core class tables.
 	self.Stations[name] = newStation
@@ -107,14 +107,14 @@ function CoreClass:GetSong(id)
 	return self.Songs[id]
 end
 
-function CoreClass:Song(name)
+function CoreClass:Song(name, songStruct)
 	-- Without a name, the song cannot possibly be valid.
 	if !string.IsValid(name) then
 		return
 	end
 
 	-- Create our new song and set it's name.
-	local newSong = CRadioSongClass(name)
+	local newSong = CRadioSongClass(name, songStruct)
 
 	-- Add the song to our core song table.
 	self.Songs[newSong:GetID()] = newSong
@@ -122,14 +122,14 @@ function CoreClass:Song(name)
 	return newSong
 end
 
-function CoreClass:SubPlaylist(name)
+function CoreClass:SubPlaylist(name, subPlaylistStruct)
 	-- Without a name, the sub-playlist cannot possibly be valid.
 	if !string.IsValid(name) then
 		return
 	end
 
 	-- Create our new sub-playlist and set it's name.
-	local newSubPlaylist = CRadioSubPlaylistClass(name)
+	local newSubPlaylist = CRadioSubPlaylistClass(name, subPlaylistStruct)
 
 	return newSubPlaylist
 end

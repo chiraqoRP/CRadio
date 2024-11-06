@@ -2,8 +2,9 @@ local SongClass = {}
 SongClass.__index = SongClass
 
 local songsGenerated = 0
+local sFuncFormat = "Set%s"
 
-function SongClass:__constructor(name)
+function SongClass:__constructor(name, songStruct)
 	if songsGenerated > 262143 then
 		ErrorNoHaltWithStack("[CRadio] | You have hit the song limit!")
 
@@ -24,6 +25,21 @@ function SongClass:__constructor(name)
 	self.ID = songsGenerated + 1
 
 	songsGenerated = songsGenerated + 1
+
+	if !istable(songStruct) then
+		return
+	end
+
+    for key, val in pairs(songStruct) do
+		local setS = string.format(sFuncFormat, key)
+		local setFunc = self[setS]
+
+		if isfunction(setFunc) then
+			setFunc(self, val)
+		else
+			self[key] = val
+		end
+    end
 end
 
 local formatString = "[Song Object] | %s - %s"
@@ -52,7 +68,7 @@ function SongClass:IsValid()
 		return false
 	end
 
-	return (string.IsValid(self.URL) or string.IsValid(self.Filepath)) and self.Parent:IsValid()
+	return (string.IsValid(self.URL) or string.IsValid(self.File)) and self.Parent:IsValid()
 end
 
 function SongClass:New(name)
@@ -74,16 +90,8 @@ function SongClass:GetName()
 	return self.Name
 end
 
-function SongClass:SetName(name)
-	self.Name = name
-end
-
 function SongClass:GetArtist()
 	return self.Artist
-end
-
-function SongClass:SetArtist(artist)
-	self.Artist = artist
 end
 
 function SongClass:GetRelease()
@@ -103,10 +111,6 @@ function SongClass:GetRelease()
 	end
 
 	return self.Release
-end
-
-function SongClass:SetRelease(release)
-	self.Release = release
 end
 
 function SongClass:GetID()
@@ -144,26 +148,8 @@ function SongClass:GetLength()
 	return self.Length
 end
 
-function SongClass:SetLength(length)
-	-- We've already set the song's length, so it must be correct.
-	if isnumber(self.Length) and self.Length != 0 then
-		return
-	end
-
-	self.Length = length
-end
-
 function SongClass:GetGap()
 	return self.Gap
-end
-
-function SongClass:SetGap(gap)
-	-- We've already set the song's length, so it must be correct.
-	if isnumber(self.Gap) then
-		return
-	end
-
-	self.Gap = gap
 end
 
 function SongClass:GetStartTime()
@@ -198,20 +184,12 @@ function SongClass:GetChance()
 	return self.Chance
 end
 
-function SongClass:SetChance(chance)
-	self.Chance = chance
-end
-
 function SongClass:GetFile()
 	if !self:IsValid() then
 		return
 	end
 
-	return self.Filepath
-end
-
-function SongClass:SetFile(filePath)
-	self.Filepath = filePath
+	return self.File
 end
 
 function SongClass:GetFileExists()
@@ -220,9 +198,9 @@ function SongClass:GetFileExists()
 	end
 
 	-- Only check if we have an actual filepath provided.
-	if self.FileExists == nil and string.IsValid(self.Filepath) then
+	if self.FileExists == nil and string.IsValid(self.File) then
 		-- Sound files are not automatically precached, so its fine to place them in sounds.
-		self.FileExists = file.Exists(self.Filepath, "GAME")
+		self.FileExists = file.Exists(self.File, "GAME")
 	end
 
 	return self.FileExists or false
@@ -232,16 +210,8 @@ function SongClass:GetURL()
 	return self.URL
 end
 
-function SongClass:SetURL(url)
-	self.URL = url
-end
-
 function SongClass:GetCover()
 	return self.Cover
-end
-
-function SongClass:SetCover(coverPath)
-	self.Cover = coverPath
 end
 
 function SongClass:IsStation()

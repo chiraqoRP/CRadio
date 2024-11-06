@@ -2,8 +2,9 @@ local StationClass = {}
 StationClass.__index = StationClass
 
 local stationsGenerated = 0
+local sFuncFormat = "Set%s"
 
-function StationClass:__constructor(name)
+function StationClass:__constructor(name, stationStruct)
 	if stationsGenerated > 255 then
 		ErrorNoHaltWithStack("[CRadio] | You have hit the station limit!")
 
@@ -27,6 +28,21 @@ function StationClass:__constructor(name)
 	end
 
 	stationsGenerated = stationsGenerated + 1
+
+	if !istable(stationStruct) then
+		return
+	end
+
+    for key, val in pairs(stationStruct) do
+		local setS = string.format(sFuncFormat, key)
+		local setFunc = self[setS]
+
+		if isfunction(setFunc) then
+			setFunc(self, val)
+		else
+			self[key] = val
+		end
+    end
 end
 
 local formatString = "[Station Object] | %s"
@@ -90,9 +106,6 @@ function StationClass:SetName(name)
 
 	-- Create and cache a sanitized string of our name to use for folder operations.
 	self.SanitizedName, _ = string.gsub(self.Name, dangerousPattern, emptyString)
-
-	-- Create our station's folder used for caching song files.
-	-- file.CreateDir(string.format(folderFormat, self.SanitizedName))
 end
 
 local defaultIcon = Material("cradio/gui/default.png", "mips")
@@ -105,20 +118,8 @@ function StationClass:GetIcon()
 	return self.Icon or defaultIcon
 end
 
-function StationClass:SetIcon(icon)
-	if SERVER then
-		return
-	end
-
-	self.Icon = icon
-end
-
 function StationClass:GetRandomizeEnabled()
 	return self.ShouldRandomize
-end
-
-function StationClass:SetRandomizeEnabled(bool)
-	self.ShouldRandomize = bool
 end
 
 function StationClass:GetStartTime()
