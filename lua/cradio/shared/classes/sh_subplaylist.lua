@@ -6,6 +6,7 @@ local sFuncFormat = "Set%s"
 function SubPlaylistClass:__constructor(name, subPlaylistStruct)
 	-- Set our name if one is provided.
 	self.Name = name
+	self.Chance = 1.0
 
 	-- Sub-playlist randomization is false by default.
 	self.ShouldRandomize = false
@@ -95,7 +96,7 @@ function SubPlaylistClass:GetRelease()
 end
 
 function SubPlaylistClass:GetChance()
-	return self.Chance or 1
+	return self.Chance
 end
 
 function SubPlaylistClass:GetRandomizeEnabled()
