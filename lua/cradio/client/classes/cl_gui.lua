@@ -29,7 +29,7 @@ function GUIClass:Open()
         return
     end
 
-    surface.PlaySound("cradio/ui_open.wav")
+    surface.PlaySound("cradio/gui/ui_open.wav")
 
     -- Mark the menu as open to prevent panel spam.
     self.MenuOpen = true
@@ -63,7 +63,7 @@ function GUIClass:Close(immediate)
         self.Frame:FancyClose()
     end
 
-    surface.PlaySound("cradio/ui_open.wav")
+    surface.PlaySound("cradio/gui/ui_open.wav")
 
     self.MenuOpen = false
 end
@@ -408,7 +408,7 @@ local function DrawIcon(x, y, alpha, size, mat)
 end
 
 local timerFormat = "cradio_gui_%s"
-local offMatPath = "cradio/icons/radio_off.png"
+local offMatPath = "cradio/gui/radio_off.png"
 local gradientLeftMat, gradientRightMat = Material("vgui/gradient-l"), Material("vgui/gradient-r")
 local panelsGenerated = 0
 
@@ -522,7 +522,7 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
 
         -- WORKAROUND: Prevent the hover sound from overlapping the open sound triggered in our class' Open method.
         if (SysTime() - self.InitTime) > 0.25 then
-            surface.PlaySound("cradio/ui_hover.wav")
+            surface.PlaySound("cradio/gui/ui_hover.wav")
         end
 
         -- If this isn't a "radio off" button, we have a valid current station, and its the same as this station, do nothing.
@@ -611,7 +611,7 @@ local screenWidth = ScrW()
 local scaleMul = screenWidth / 2560 or 1.0
 
 -- recordMat is the fallback used when a song doesn't have a valid cover.
-local recordMat = Material("cradio/icons/notification_record.png", "smooth mips")
+local recordMat = Material("cradio/gui/notification_record.png", "smooth mips")
 local backgroundColor = Color(40, 40, 40, 150)
 local bufferTextColor = Color(255, 255, 255, 0)
 local bufferFormat = "%.2f%%"

@@ -95,7 +95,7 @@ function StationClass:SetName(name)
 	-- file.CreateDir(string.format(folderFormat, self.SanitizedName))
 end
 
-local defaultIcon = Material("cradio/icons/default.png", "mips")
+local defaultIcon = Material("cradio/gui/default.png", "mips")
 
 function StationClass:GetIcon()
 	if SERVER then
