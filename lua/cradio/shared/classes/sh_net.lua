@@ -90,7 +90,7 @@ function NetClass:ReceivePlayRequest(len, ply)
 	-- print("[NetClass] - ReceivePlayRequest | isCustomEnt/ent: ", isCustomEnt, ent)
 
 	-- Fuck off skid.
-	if isCustomEnt and !ent.IsCRadioEnt then
+	if isCustomEnt and !ent.CRadio then
 		return
 	end
 

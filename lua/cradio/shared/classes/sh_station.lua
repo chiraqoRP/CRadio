@@ -130,6 +130,7 @@ function StationClass:GetNextPlaylistRefresh()
 end
 
 function StationClass:SetNextPlaylistRefresh(nextRefresh)
+	-- ISSUE: https://github.com/chiraqoRP/CRadio/issues/1
 	-- HACK: IGModAudioChannel takes time to initialize (roughly ~0.3s) and there should be a silent gap between tracks anyways.
 	nextRefresh = nextRefresh + 1.0
 
@@ -540,23 +541,20 @@ function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
 	-- Otherwise, stop the static sound and print an error.
 	local playSong = fileValid and sound.PlayFile or (urlValid and sound.PlayURL) or false
 
-	if playSong then
-		playSong(audioFile or url, channelFlags, function(channel, errorID, errorName)
-			-- print("channel initialized: ", SysTime())
-
-			self:ProcessRadioChannel(ent, channel, urlValid and curSongTime > 0.5, doFade, callback)
-		end)
 	-- We have no audio file and there is no valid URL provided, so halt and print an error.
-	else
+	if !playSong then
 		ErrorNoHalt(self, " - No file present or valid URL for ", curSong, ".")
 
 		StopStatic(ent)
 
 		return
 	end
+
+	playSong(audioFile or url, channelFlags, function(channel, errorID, errorName)
+		self:ProcessRadioChannel(ent, channel, curSongTime > 0.5, doFade, callback)
+	end)
 end
 
-local shouldNotification = GetConVar("cl_cradio_notification")
 local defaultVol = GetConVar("cl_cradio_volume")
 
 function StationClass:ProcessRadioChannel(ent, channel, shouldBuffer, doFade, callback)
@@ -595,13 +593,6 @@ function StationClass:ProcessRadioChannel(ent, channel, shouldBuffer, doFade, ca
 	-- Cache the station object for comparison. 
 	channel:SetStation(self)
 
-	-- Notifications can be really intrusive for third-party entities.
-	if !ent.IsCRadioEnt and shouldNotification:GetBool() then
-		local cGUI = CRadio:GetGUI()
-
-		cGUI:DoPlayNotification(self:GetCurrentSong(), channel)
-	end
-
 	ent:SetRadioChannel(channel)
 
 	self.RadioChannels[ent] = channel
@@ -609,10 +600,19 @@ function StationClass:ProcessRadioChannel(ent, channel, shouldBuffer, doFade, ca
 	if isfunction(callback) then
 		callback(ent, channel)
 	end
+
+	-- PREBUFFER:
+	if ent.CRadio or ent != CLib.GetVehicle() then
+		return
+	end
+
+	self:QueuePreBuffer(self.Playlist[1], self.Playlist[2])
 end
 
 function StationClass:UpdateRadioChannels()
-	if SERVER then
+	local curSong = self.Playlist[1]
+
+	if SERVER or !curSong then
 		return
 	end
 
@@ -623,7 +623,8 @@ function StationClass:UpdateRadioChannels()
 		return
 	end
 
-	local cacheCheck = radioChannels[CLib.GetVehicle()]
+	local ourVehicle = CLib.GetVehicle()
+	local cacheCheck = radioChannels[ourVehicle]
 
 	if cacheCheck and cacheCheck:IsValid() then
 		MsgC(color_white, "How much time was left on song for station [", Color(200, 0, 0), self.Name, color_white, "]: ", Color(0, 255, 0), self.LastSong:GetLength() - cacheCheck:GetTime(), color_white, " seconds!\n")
@@ -655,13 +656,111 @@ function StationClass:UpdateRadioChannels()
 
 		local is3D = channel:Is3D()
 
-	    ent:StopRadioChannel()
+	    ent:StopRadioChannel(false, false, true)
 
-        self:RadioChannel(ent, is3D)
+        -- PREBUFFER:
+        local cGUI = CRadio:GetGUI()
+        local preBufferChannel = ent.acPreBuffer
+
+		if preBufferChannel and preBufferChannel:IsValid() then
+			ent:SetRadioChannel(preBufferChannel)
+			preBufferChannel:Play()
+
+			self.RadioChannels[ent] = preBufferChannel
+
+			-- TODO: set to nil even if not :IsValid()?
+			ent.acPreBuffer = nil
+
+			cGUI:DoPlayNotification(curSong, preBufferChannel, ent)
+		else
+			self:RadioChannel(ent, is3D, false, false, function(nEnt, nChannel)
+				cGUI:DoPlayNotification(curSong, nChannel, nEnt)
+			end)
+		end
+
+		-- PREBUFFER:
+		if !ent.CRadio and ent == ourVehicle then
+			self:QueuePreBuffer(curSong, self.Playlist[2])
+		end
 
 		-- Mark the entity as already updated so we don't do so again.
 		updatedEnts[ent] = true
 	end
+end
+
+local shouldPreBuffer = GetConVar("cl_cradio_prebuffer")
+
+function StationClass:QueuePreBuffer(curSong, nextSong)
+	if !shouldPreBuffer:GetBool() then
+		return
+	end
+
+	local preBufferDelay = math.max(curSong:GetTimeLeft() - 3, 1)
+
+	timer.Create("CRadio_PreBuffer", preBufferDelay, 1, function()
+		local vehicle = CLib.GetVehicle()
+
+		if !IsValid(vehicle) then
+			return
+		end
+
+		-- COMMENT:
+		-- Song must not be nil and be valid (have both name and url).
+		if self != vehicle:GetCurrentStation() or curSong != self.Playlist[1] or !IsValid(nextSong) or !nextSong:IsValid() then
+			return
+		end
+
+		local url = nextSong:GetURL()
+		local fileValid, audioFile = nextSong:GetFileExists(), nextSong:GetFile()
+
+		-- Checks if our URL is a non-empty string, and if it is a valid URL (ie https://urlhere.domain).
+		local urlValid = string.Left(url, 4) == "http"
+
+		-- 3D only works properly with the mono channel flag.
+		local channelFlags = enable3D and string.format(m3DFlags, fileFlags) or fileFlags
+
+		-- If a filepath is defined and the file exists, we use that.
+		-- If no file is present, fallback to the URL if valid.
+		-- Otherwise, print an error.
+		local playSong = fileValid and sound.PlayFile or (urlValid and sound.PlayURL) or false
+
+		-- We have no audio file and there is no valid URL provided, so halt and print an error.
+		if !playSong then
+			ErrorNoHalt(self, " - No file present or valid URL for ", nextSong, ".")
+
+			return
+		end
+
+		playSong(audioFile or url, channelFlags, function(channel, errorID, errorName)
+			if !IsValid(channel) then
+				return
+			end
+
+			if vehicle != CLib.GetVehicle() or !IsValid(vehicle) then
+				channel:Stop()
+
+				return
+			end
+
+			if channel:Is3D() then
+				channel:Set3DEnabled(true)
+			end
+
+			channel:SetVolume(defaultVol:GetFloat())
+
+			-- Cache the station object for comparison. 
+			channel:SetStation(self)
+
+			-- COMMENT: sanity check :)
+			local preBufferChannel = vehicle.acPreBuffer
+
+			if preBufferChannel and preBufferChannel:IsValid() then
+				preBufferChannel:Stop()
+			end
+
+			vehicle.acPreBuffer = channel
+		end)
+	end)
 end
 
 function StationClass:DoNetwork(externalNet)
@@ -778,6 +877,25 @@ function StationClass:DebugTime()
 		MsgC(color_white, "Song Length (Act):    ", greenColor, math.Round(CLib.GetVehicle():GetRadioChannel():GetLength(), 4), color_white, " seconds!\n")
 	end
 
+	MsgC(color_white, "-----------------------\n")
+end
+
+function StationClass:DebugPreBuffer()
+	if SERVER then
+		return
+	end
+
+	local channel = nil
+	local vehicle = CLib.GetVehicle()
+
+	if IsValid(vehicle) then
+		channel = vehicle.acPreBuffer
+	end
+
+	MsgC(color_white, "-----------------------\n")
+	MsgC(color_white, "Timer Exists:           ", greenColor, timer.Exists("CRadio_PreBuffer"), color_white, "!\n")
+	MsgC(color_white, "Timer Left:             ", greenColor, math.Round(timer.TimeLeft("CRadio_PreBuffer") or 0, 4), color_white, " seconds!\n")
+	MsgC(color_white, "preBufferChannel:       ", greenColor, channel, color_white, "!\n")
 	MsgC(color_white, "-----------------------\n")
 end
 

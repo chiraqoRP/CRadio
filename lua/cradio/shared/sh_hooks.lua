@@ -120,14 +120,8 @@ else
     end)
 
     local function StationVarChanged(ent, name, old, new)
-        local ply = LocalPlayer()
-
-        -- If we're not in the vehicle, don't play/stop any radio channel.
-        if CLib.GetVehicle(ply:GetVehicle()) != ent then
-            return
-        end
-
-        if !ent:GetRadioOn() then
+        -- If we're not in the vehicle or our radio is off, don't play/stop any radio channel.
+        if ent != CLib.GetVehicle() or !ent:GetRadioOn() then
             return
         end
 
@@ -148,14 +142,17 @@ else
 
         -- print("StationVarChanged | station: ", station)
 
-        station:RadioChannel(ent, false, true, true)
+        local curSong = station:GetCurrentSong()
+        local cGUI = CRadio:GetGUI()
+
+        station:RadioChannel(ent, false, true, true, function(nEnt, channel)
+            cGUI:DoPlayNotification(curSong, channel, nEnt)
+        end)
     end
 
     local function RadioStateVarChanged(ent, name, old, new)
-        local ply = LocalPlayer()
-
         -- If we're not in the vehicle, don't play/stop any audio channel.
-        if CLib.GetVehicle(ply:GetVehicle()) != ent then
+        if ent != CLib.GetVehicle() then
             return
         end
 

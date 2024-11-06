@@ -34,7 +34,7 @@ if CLIENT then
         self.acRadioChannel = channel
     end
 
-    function ENTITY:StopRadioChannel(doFade, fadeLength)
+    function ENTITY:StopRadioChannel(doFade, fadeLength, skipPreBuffer)
         local channel = self.acRadioChannel
 
         if channel and channel:IsValid() then
@@ -51,7 +51,19 @@ if CLIENT then
             -- print("ENTITY:StopRadioChannel | channel stopped!")
         end
 
+        local preBufferChannel = self.acPreBuffer
+
+        if !skipPreBuffer then
+            if preBufferChannel and preBufferChannel:IsValid() then
+                preBufferChannel:Stop()
+            end
+
+            self.acPreBuffer = nil
+        end
+
         self.acRadioChannel = nil
+
+        timer.Remove("CRadio_PreBuffer")
     end
 
     local AUDIOCHANNEL = FindMetaTable("IGModAudioChannel")
@@ -170,7 +182,7 @@ if CLIENT then
                     bufferCallback(self, parent, station)
                 end
 
-                -- print("ProcessChannel | Buffering finished, time set to ", self:GetTime(), "!")
+                -- print("ProcessChannel | Buffering finished, time set to ", self:GetTime(), " supposed to be set to ", seekTime, "!")
 
                 -- We don't want to kill the channel, so we feed it nil/false where the channel arg is.
                 KillBufferHook(identifier, false, parent)

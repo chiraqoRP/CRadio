@@ -1,4 +1,5 @@
 if CLIENT then
+    CreateClientConVar("cl_cradio_prebuffer", 1, true, false, "", 0, 1)
     CreateClientConVar("cl_cradio_notification", 1, true, false, "", 0, 1)
     CreateClientConVar("cl_cradio_volume", 1.0, true, false, "", 0, 2.0)
     CreateClientConVar("cl_cradio_failuredelay", 5, true, false, "", 5, 30)
@@ -19,16 +20,27 @@ if CLIENT then
             local station = stations[i]
             local radioChannels = station:GetRadioChannels()
 
+            print("cl_cradio_volume - any channels?", !table.IsEmpty(radioChannels))
+
             if table.IsEmpty(radioChannels) then
                 continue
             end
 
-            for _, channel in pairs(radioChannels) do
+            for ent, channel in pairs(radioChannels) do
                 if !channel or !channel:IsValid() or math.Round(old, 3) != math.Round(channel:GetVolume(), 3) then
                     return
                 end
-        
+
                 channel:SetVolume(new)
+
+                -- PREBUFFER:
+                local preBufferChannel = ent.acPreBuffer
+
+                if !preBufferChannel or !preBufferChannel:IsValid() or math.Round(old, 3) != math.Round(preBufferChannel:GetVolume(), 3) then
+                    return
+                end
+
+                preBufferChannel:SetVolume(new)
             end
         end
     end)

@@ -191,8 +191,6 @@ function GUIClass:BuildFrame()
             local lastHoveredPanel = self:GetChild(lastHovered + 4)
 
             if IsValid(lastHoveredPanel) then
-                lastHoveredPanel.isHovered = false
-
                 -- Manually calling PANEL:OnCursorExited is hacky, so we call a custom OnUnhover function instead.
                 lastHoveredPanel:OnUnhover()
             end
@@ -579,7 +577,6 @@ function GUIClass:BuildStationPanels()
 
         local newX, newY = stationPanel:GetCenter()
 
-        -- FIXME: This is never accurate on non-straight angles!
         -- Sets our cursor to the center position of the station element.
         input.SetCursorPos(newX, newY)
 
@@ -605,6 +602,7 @@ function GUIClass:BuildStationPanels()
     end
 end
 
+local shouldNotification = GetConVar("cl_cradio_notification")
 local failureDelay = GetConVar("cl_cradio_failuredelay")
 
 -- We only scale down the notification panel and fonts if our width is below 2560.
@@ -617,8 +615,18 @@ local backgroundColor = Color(40, 40, 40, 150)
 local bufferTextColor = Color(255, 255, 255, 0)
 local bufferFormat = "%.2f%%"
 
-function GUIClass:DoPlayNotification(song, radioChannel)
-    if !song or !song:IsValid() then
+function GUIClass:DoPlayNotification(song, radioChannel, ent)
+    if !shouldNotification:GetBool() then
+        return
+    end
+
+    -- COMMENT:
+    if !song or !song:IsValid() or !song:ShouldNotify() then
+        return
+    end
+
+    -- COMMENT:
+    if IsValid(ent) and (ent.CRadio or ent != CLib.GetVehicle()) then
         return
     end
 
@@ -706,7 +714,7 @@ function GUIClass:DoPlayNotification(song, radioChannel)
 
         -- Draws the song name in bold lettering.
         surface.SetTextColor(255, 255, 255)
-        surface.SetTextPos(nTextOffset, (10 * scaleMul))
+        surface.SetTextPos(nTextOffset, 10 * scaleMul)
         surface.DrawText(name)
 
         -- Draws the separator between name and release/artist.
@@ -758,7 +766,7 @@ function GUIClass:DoPlayNotification(song, radioChannel)
 
             -- Draws our progress bar.
             surface.SetDrawColor(255, 255, 255, 50 * alphaMul)
-            surface.DrawRect(0, h - (4 * scaleMul), bufferProgress * w, (4 * scaleMul))
+            surface.DrawRect(0, h - (4 * scaleMul), bufferProgress * w, 4 * scaleMul)
 
             self.AlphaMult = alphaMul
         end

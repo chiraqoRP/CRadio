@@ -163,9 +163,6 @@ function SongClass:SetStartTime(time)
 	self.StartTime = math.max(time, 0)
 end
 
-local blueColor = Color(0, 180, 255)
-local orangeColor = Color(255, 200, 30)
-
 function SongClass:GetEndTime()
 	return (self.StartTime or CurTime()) + self.Length
 end
@@ -176,6 +173,10 @@ function SongClass:GetCurTime()
 	end
 
 	return CurTime() - self.StartTime
+end
+
+function SongClass:GetTimeLeft()
+	return math.max(self:GetEndTime() - CurTime(), 0)
 end
 
 function SongClass:GetChance()
@@ -241,6 +242,10 @@ function SongClass:IsSubPlaylist()
 end
 
 function SongClass:ShouldPlay()
+	return true
+end
+
+function SongClass:ShouldNotify()
 	return true
 end
 
