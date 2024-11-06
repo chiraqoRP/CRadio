@@ -98,13 +98,17 @@ end
 local defaultIcon = Material("cradio/icons/default.png", "mips")
 
 function StationClass:GetIcon()
-	if SERVER then return end
+	if SERVER then
+		return
+	end
 
 	return self.Icon or defaultIcon
 end
 
 function StationClass:SetIcon(icon)
-	if SERVER then return end
+	if SERVER then
+		return
+	end
 
 	self.Icon = icon
 end

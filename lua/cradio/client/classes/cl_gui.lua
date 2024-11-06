@@ -438,7 +438,8 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
         self.OutlineRightCircle = CalcOutlineCircle(radius_m / 2, radius_m / 2, iconSize + 4, 4, gradientRight, gradientRightMat)
 
         -- Creates our station's icon material, deleted when GUIClass:Close is called.
-        self.Icon = Material(iconPath, "smooth mips")
+        -- If no valid string is provided, the var is the default material.
+        self.Icon = string.IsValid(iconPath) and Material(iconPath, "smooth mips") or iconPath
 
         -- If the station has no name (aka isOffButton == true), then we use the number of generated panels for the timer.
         local stationName = station and station:GetName() or tostring(panelsGenerated)
