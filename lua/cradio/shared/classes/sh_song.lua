@@ -13,6 +13,8 @@ function SongClass:__constructor(name)
 	-- Set our name if one is provided.
 	self.Name = name
 	self.Length = 0
+	self.Gap = 0.5
+	self.Chance = 1.0
 
 	-- Without this, some string ops will cause halting errors.
 	-- Its the users responsibility to check URL validity anyways.
@@ -151,6 +153,19 @@ function SongClass:SetLength(length)
 	self.Length = length
 end
 
+function SongClass:GetGap()
+	return self.Gap
+end
+
+function SongClass:SetGap(gap)
+	-- We've already set the song's length, so it must be correct.
+	if isnumber(self.Gap) then
+		return
+	end
+
+	self.Gap = gap
+end
+
 function SongClass:GetStartTime()
 	return self.StartTime or CurTime()
 end
@@ -180,7 +195,7 @@ function SongClass:GetTimeLeft()
 end
 
 function SongClass:GetChance()
-	return self.Chance or 1
+	return self.Chance
 end
 
 function SongClass:SetChance(chance)

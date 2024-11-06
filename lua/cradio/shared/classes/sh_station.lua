@@ -134,9 +134,15 @@ function StationClass:GetNextPlaylistRefresh()
 end
 
 function StationClass:SetNextPlaylistRefresh(nextRefresh)
-	-- ISSUE: https://github.com/chiraqoRP/CRadio/issues/1
-	-- HACK: IGModAudioChannel takes time to initialize (roughly ~0.3s) and there should be a silent gap between tracks anyways.
-	nextRefresh = nextRefresh + 1.0
+	local curSong = self.Playlist[1]
+	local gap = 0
+
+	-- This returns the gap between our current song and the next song. Defaults to 0.5.
+	if IsValid(curSong) then
+		gap = curSong:GetGap()
+	end
+
+	nextRefresh = nextRefresh + gap
 
 	-- print("SetNextPlaylistRefresh timer set to ", nextRefresh - CurTime(), " for station ", self.Name, "!")
 

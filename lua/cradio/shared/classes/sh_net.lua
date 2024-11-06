@@ -194,7 +194,7 @@ function NetClass:ReceivePlaylist(len)
 		station:SetNextPlaylistRefresh(songEndTime)
 
 		-- Calling this on CLIENT in a timer will result in nothing happening (because the playlist is empty!) and the station just doing nothing.
-		-- This fixes that albeit by introducing some unavoidable delay to the song transition.
+		-- This fixes that, albeit by introducing some unavoidable delay to the song transition.
 		station:UpdateRadioChannels()
 	end
 end
