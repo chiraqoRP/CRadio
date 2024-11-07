@@ -144,6 +144,10 @@ function SongClass:GetStation()
 end
 
 function SongClass:GetLength()
+	return self.Length + self.Gap
+end
+
+function SongClass:GetBaseLength()
 	return self.Length
 end
 
@@ -164,7 +168,7 @@ function SongClass:SetStartTime(time)
 end
 
 function SongClass:GetEndTime()
-	return (self.StartTime or CurTime()) + self.Length
+	return (self.StartTime or CurTime()) + self:GetLength()
 end
 
 function SongClass:GetCurTime()
