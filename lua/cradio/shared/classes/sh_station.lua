@@ -30,6 +30,9 @@ function StationClass:__constructor(name, stationStruct)
 		self.RadioChannels = {}
 	end
 
+	-- Our ID doesn't need to be cryptographically secure, it's only used for __eq operations.
+	self.ID = stationsGenerated + 1
+
 	stationsGenerated = stationsGenerated + 1
 
     for key, val in pairs(stationStruct) do
@@ -77,7 +80,7 @@ function StationClass:Remove()
 
 	local seqStations = CRadio:GetStations(true)
 
-	table.RemoveByValue(seqStations, self)
+	table.remove(seqStations, self.ID)
 
 	-- TODO: Does this even do what I think it does?
 	setmetatable(self, nil)
@@ -104,6 +107,10 @@ function StationClass:SetName(name)
 
 	-- Create and cache a sanitized string of our name to use for folder operations.
 	self.SanitizedName, _ = string.gsub(self.Name, dangerousPattern, emptyString)
+end
+
+function StationClass:GetID()
+	return self.ID
 end
 
 local defaultIcon = Material("cradio/gui/default.png", "mips")
@@ -777,7 +784,7 @@ function StationClass:DoNetwork(externalNet)
 	local playlist = self:GetPlaylist()
 	local songCount = #playlist
 
-	net.WriteString(self:GetName())
+	net.WriteUInt(self:GetID(), 8)
 
 	local curSong = self:GetCurrentSong()
 	local songEndTime = (curSong and curSong:GetEndTime()) or CurTime()

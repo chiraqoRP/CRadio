@@ -43,7 +43,7 @@ function NetClass:SendPlayRequest(station, ent)
 	if isEnabling then
 		-- print("[NetClass] - ReceivePlayRequest | name: ", station:GetName())
 
-		net.WriteString(station:GetName())
+		net.WriteUInt(station:GetID(), 8)
 	end
 
 	local isCustomEnt = isentity(ent)
@@ -72,10 +72,10 @@ function NetClass:ReceivePlayRequest(len, ply)
 
 	local isEnabling = net.ReadBool()
 	local station = nil
-	local stationName = net.ReadString()
+	local id = net.ReadUInt(8)
 
 	if isEnabling then
-		station = CRadio:GetStation(stationName)
+		station = CRadio:GetStation(id)
 	end
 
 	-- print("[NetClass] - ReceivePlayRequest | stationName/station: ", stationName, station)
@@ -168,7 +168,7 @@ function NetClass:ReceivePlaylist(len)
 	local stationCount = net.ReadUInt(8)
 
 	for i = 1, stationCount do
-		local station = CRadio:GetStation(net.ReadString())
+		local station = CRadio:GetStation(net.ReadUInt(8))
 		local playlist = station:GetPlaylist()
 		local songEndTime = net.ReadFloat()
 		local songCount = net.ReadUInt(10)

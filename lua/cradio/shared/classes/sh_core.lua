@@ -62,7 +62,16 @@ function CoreClass:GetStations(sequential)
 	return (sequential and self.SequentialStations) or self.Stations
 end
 
-function CoreClass:GetStation(name)
+function CoreClass:GetStation(id)
+	-- Without an id, we can't possibly know which station to index.
+	if !isnumber(id) then
+		return
+	end
+
+	return self.SequentialStations[id]
+end
+
+function CoreClass:GetStationByName(name)
 	if !string.IsValid(name) then
 		return
 	end
@@ -88,8 +97,7 @@ function CoreClass:Station(name, stationStruct)
 
 	-- Adds station to our core class tables.
 	self.Stations[name] = newStation
-
-	table.insert(self.SequentialStations, newStation)
+	self.SequentialStations[newStation:GetID()] = newStation
 
 	return newStation
 end

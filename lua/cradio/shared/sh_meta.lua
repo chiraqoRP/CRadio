@@ -9,15 +9,15 @@ function ENTITY:SetRadioOn(on)
 end
 
 function ENTITY:GetCurrentStation()
-    local name = self:GetNW2String("CRadio.Station")
+    local name = self:GetNW2Int("CRadio.Station")
 
     return CRadio:GetStation(name)
 end
 
 function ENTITY:SetCurrentStation(station)
-    local name = (station and station:GetName()) or nil
+    local id = (station and station:GetID()) or nil
 
-    self:SetNW2String("CRadio.Station", name)
+    self:SetNW2Int("CRadio.Station", id)
 end
 
 if CLIENT then
