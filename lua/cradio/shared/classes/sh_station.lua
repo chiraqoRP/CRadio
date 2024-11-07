@@ -2,7 +2,6 @@ local StationClass = {}
 StationClass.__index = StationClass
 
 local stationsGenerated = 0
-local sFuncFormat = "Set%s"
 
 function StationClass:__constructor(name, stationStruct)
 	if stationsGenerated > 255 then
@@ -13,14 +12,18 @@ function StationClass:__constructor(name, stationStruct)
 
 	-- Set our name if one is provided.
 	self:SetName(name)
+	self.Icon = stationStruct.Icon
 
 	-- Playlist randomization is enabled by default.
-	self.ShouldRandomize = true
+	self.Randomize = stationStruct.Randomize
 
-	self.Songs = {}
+	if self.Randomize == nil then
+		self.Randomize = true
+	end
+
+	self.Songs, self.SongCount = {}, 0
 	self.SubPlaylists = {}
 	self.Playlist = {}
-	self.SongCount = 0
 
 	-- Stores all of the client's radio channels.
 	if CLIENT then
@@ -29,19 +32,12 @@ function StationClass:__constructor(name, stationStruct)
 
 	stationsGenerated = stationsGenerated + 1
 
-	if !istable(stationStruct) then
-		return
-	end
-
     for key, val in pairs(stationStruct) do
-		local setS = string.format(sFuncFormat, key)
-		local setFunc = self[setS]
-
-		if isfunction(setFunc) then
-			setFunc(self, val)
-		else
-			self[key] = val
+		if self[key] != nil then
+			continue
 		end
+
+		self[key] = val
     end
 end
 
@@ -56,7 +52,9 @@ end
 
 function StationClass:__eq(other)
 	-- If either station lacks a name, they are not equal.
-	if !self:IsValid() or !other:IsValid() then return false end
+	if !self:IsValid() or !other:IsValid() then
+		return false
+	end
 
 	return self.Name == other:GetName()
 end
@@ -118,8 +116,8 @@ function StationClass:GetIcon()
 	return self.Icon or defaultIcon
 end
 
-function StationClass:GetRandomizeEnabled()
-	return self.ShouldRandomize
+function StationClass:ShouldRandomize()
+	return self.Randomize
 end
 
 function StationClass:GetStartTime()
@@ -135,16 +133,6 @@ function StationClass:GetNextPlaylistRefresh()
 end
 
 function StationClass:SetNextPlaylistRefresh(nextRefresh)
-	local curSong = self.Playlist[1]
-	local gap = 0
-
-	-- This returns the gap between our current song and the next song. Defaults to 0.5.
-	if IsValid(curSong) then
-		gap = curSong:GetGap()
-	end
-
-	nextRefresh = nextRefresh + gap
-
 	-- print("SetNextPlaylistRefresh timer set to ", nextRefresh - CurTime(), " for station ", self.Name, "!")
 
 	self.NextPlaylistRefresh = nextRefresh
@@ -249,7 +237,7 @@ end
 
 local function InsertSubPlaylist(playlist, subplaylist, index)
 	local songs = subplaylist:GetSongs()
-	local shouldRandomize = subplaylist:GetRandomizeEnabled()
+	local shouldRandomize = subplaylist:ShouldRandomize()
 	local songCount = #songs
 	local songsToInsert = {}
 	local finalCount = 0
@@ -311,7 +299,7 @@ function StationClass:GeneratePlaylist()
 		finalCount = finalCount + 1
 	end
 
-	if self.ShouldRandomize then
+	if self.Randomize then
 		ShuffleKnown(self.Playlist, finalCount)
 	end
 
@@ -339,8 +327,8 @@ function StationClass:GeneratePlaylist()
 	end
 end
 
-function StationClass:SortPlaylist(last)
-	if CLIENT or !self.ShouldRandomize then
+function StationClass:SortPlaylist(lastSong)
+	if CLIENT or !self.Randomize then
 		return
 	end
 
@@ -361,7 +349,7 @@ function StationClass:SortPlaylist(last)
 		end
 
 	    local song = self.Playlist[i]
-		local leftSong = (i == 1 and last) or self.Playlist[i - 1]
+		local leftSong = (i == 1 and lastSong) or self.Playlist[i - 1]
 
 		-- It's unlikely, but if the left song is nil somehow then skip it.
 		if !leftSong then
@@ -417,7 +405,7 @@ function StationClass:RefreshPlaylist(isInitial)
 		self:GeneratePlaylist()
 
 		-- If playlist randomization is enabled, sort the playlist to reduce artist repetition.
-		if self.ShouldRandomize then
+		if self.Randomize then
 			self:SortPlaylist(lastSong)
 		end
 	end
@@ -638,7 +626,7 @@ function StationClass:UpdateRadioChannels()
 	local cacheCheck = radioChannels[ourVehicle]
 
 	if cacheCheck and cacheCheck:IsValid() then
-		MsgC(color_white, "How much time was left on song for station [", Color(200, 0, 0), self.Name, color_white, "]: ", Color(0, 255, 0), self.LastSong:GetLength() - cacheCheck:GetTime(), color_white, " seconds!\n")
+		MsgC(color_white, "How much time was left on song for station [", Color(200, 0, 0), self.Name, color_white, "]: ", Color(0, 255, 0), (self.LastSong:GetLength() - self.LastSong:GetGap()) - cacheCheck:GetTime(), color_white, " seconds!\n")
 
 		MsgC(color_white, "Length (Def):   ", Color(0, 255, 0), self.LastSong:GetLength(), color_white, " seconds!\n")
 		MsgC(color_white, "Length (Act):   ", Color(0, 255, 0), cacheCheck:GetLength(), color_white, " seconds!\n")
@@ -743,6 +731,8 @@ function StationClass:QueuePreBuffer(curSong, nextSong)
 		end
 
 		playSong(audioFile or url, channelFlags, function(channel, errorID, errorName)
+			print("prebuffer channel initialized: ", SysTime())
+
 			if !IsValid(channel) then
 				return
 			end

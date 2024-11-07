@@ -2,7 +2,6 @@ local SongClass = {}
 SongClass.__index = SongClass
 
 local songsGenerated = 0
-local sFuncFormat = "Set%s"
 
 function SongClass:__constructor(name, songStruct)
 	if songsGenerated > 262143 then
@@ -13,32 +12,32 @@ function SongClass:__constructor(name, songStruct)
 
 	-- Set our name if one is provided.
 	self.Name = name
-	self.Length = 0
-	self.Gap = 0.5
-	self.Chance = 1.0
+	self.Artist = songStruct.Artist
+	self.Release = songStruct.Release
+	self.Length = songStruct.Length or 0
+	self.Gap = songStruct.Gap or 0.5
+	self.Chance = songStruct.Chance or 1.0
 
 	-- Without this, some string ops will cause halting errors.
 	-- Its the users responsibility to check URL validity anyways.
-	self.URL = ""
+	self.URL = songStruct.URL or ""
+
+	self.File = songStruct.File
+	self.Cover = songStruct.Cover
 
 	-- Our ID doesn't need to be cryptographically secure, it's only used for __eq operations.
 	self.ID = songsGenerated + 1
 
 	songsGenerated = songsGenerated + 1
 
-	if !istable(songStruct) then
-		return
-	end
+	self:SetParent(songStruct.Parent)
 
     for key, val in pairs(songStruct) do
-		local setS = string.format(sFuncFormat, key)
-		local setFunc = self[setS]
-
-		if isfunction(setFunc) then
-			setFunc(self, val)
-		else
-			self[key] = val
+		if self[key] != nil then
+			continue
 		end
+
+		self[key] = val
     end
 end
 

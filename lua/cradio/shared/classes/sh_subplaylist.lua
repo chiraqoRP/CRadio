@@ -1,31 +1,27 @@
 local SubPlaylistClass = {}
 SubPlaylistClass.__index = SubPlaylistClass
 
-local sFuncFormat = "Set%s"
-
 function SubPlaylistClass:__constructor(name, subPlaylistStruct)
 	-- Set our name if one is provided.
 	self.Name = name
-	self.Chance = 1.0
+	self.Release = subPlaylistStruct.Release
+	self.Chance = subPlaylistStruct.Chance or 1.0
 
-	-- Sub-playlist randomization is false by default.
-	self.ShouldRandomize = false
+	-- SubPlaylist randomization is disabled by default.
+	self.Randomize = subPlaylistStruct.Randomize
+
+	if self.Randomize == nil then
+		self.Randomize = false
+	end
 
 	self.Songs = {}
 
-	if !istable(subPlaylistStruct) then
-		return
-	end
-
     for key, val in pairs(subPlaylistStruct) do
-		local setS = string.format(sFuncFormat, key)
-		local setFunc = self[setS]
-
-		if isfunction(setFunc) then
-			setFunc(self, val)
-		else
-			self[key] = val
+		if self[key] != nil then
+			continue
 		end
+
+		self[key] = val
     end
 end
 
@@ -99,8 +95,8 @@ function SubPlaylistClass:GetChance()
 	return self.Chance
 end
 
-function SubPlaylistClass:GetRandomizeEnabled()
-	return self.ShouldRandomize
+function SubPlaylistClass:ShouldRandomize()
+	return self.Randomize
 end
 
 function SubPlaylistClass:GetSongs()
