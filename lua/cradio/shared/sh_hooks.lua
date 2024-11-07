@@ -67,6 +67,25 @@ if SERVER then
     hook.Add("simfphysOnEngine", "CRadio.ControlRadio", function(veh, active, ignoresettings)
         veh:SetRadioOn(active)
     end)
+
+    -- HACK: We cannot avoid this, even modifying the baseclass doesn't work because of inheritance hell.
+    hook.Add("OnEntityCreated", "CRadio.LVSNotify", function(ent)
+        timer.Simple(0, function()
+            if !IsValid(ent) or !ent.LVS then
+                return
+            end
+
+            ent:NetworkVarNotify("EngineActive", function(ent, name, old, new)
+                if old == new then
+                    return
+                end
+
+                print(ent, name, old, new)
+
+                ent:SetRadioOn(new)
+            end)
+        end)
+    end)
 else
     hook.Add("PlayerEnteredVehicle", "CRadio.ControlRadio", function(ply, veh)
         -- Get the real vehicle entity in case we're using simfphys/LVS.
@@ -186,7 +205,7 @@ else
     end)
 
     hook.Add("EntityRemoved", "CRadio.ClearSounds", function(ent, fullUpdate)
-        if fullUpdate or !ent:IsVehicle() then
+        if fullUpdate or !(ent:IsVehicle() or ent.LVS) then
             return
         end
 
