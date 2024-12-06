@@ -75,14 +75,12 @@ if SERVER then
                 return
             end
 
-            ent:NetworkVarNotify("EngineActive", function(ent, name, old, new)
+            ent:NetworkVarNotify("EngineActive", function(lvEnt, name, old, new)
                 if old == new then
                     return
                 end
 
-                print(ent, name, old, new)
-
-                ent:SetRadioOn(new)
+                lvEnt:SetRadioOn(new)
             end)
         end)
     end)
@@ -244,10 +242,10 @@ else
         cGUI:Open()
     end)
 
-    local overrideCVar = GetConVar("cl_cradio_gui_spawnmenu")
+    local overrideMenu = GetConVar("cl_cradio_gui_spawnmenu")
 
-    hook.Add("OnSpawnMenuOpen", "CRadio_GUI_Open", function()
-        if !overrideCVar:GetBool() then
+    hook.Add("OnSpawnMenuOpen", "CRadio.GUI.Open", function()
+        if !overrideMenu:GetBool() then
             return
         end
 
@@ -256,8 +254,8 @@ else
         cGUI:Open()
     end)
 
-    hook.Add("OnSpawnMenuClose", "CRadio_GUI_Close", function()
-        if !overrideCVar:GetBool() then
+    hook.Add("OnSpawnMenuClose", "CRadio.GUI.Close", function()
+        if !overrideMenu:GetBool() then
             return
         end
 
@@ -266,8 +264,10 @@ else
         cGUI:Close()
     end)
 
-    hook.Add("SpawnMenuOpen", "CRadio_GUI_Spawnmenu", function()
-        if !overrideCVar:GetBool() then
+    local enabled = GetConVar("cl_cradio")
+
+    hook.Add("SpawnMenuOpen", "CRadio.GUI.DisableSpawnMenu", function()
+        if !enabled:GetBool() or !overrideMenu:GetBool() then
             return
         end
 

@@ -488,12 +488,13 @@ local function StopStatic(ent)
 	end
 end
 
+local enabled = GetConVar("cl_cradio")
 local m3DFlags = "3d mono %s"
 local urlFlags = "noplay noblock"
 local fileFlags = "noplay"
 
 function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
-	if SERVER or !IsValid(ent) then
+	if SERVER or !IsValid(ent) or !enabled:GetBool() then
 		return
 	end
 
@@ -697,7 +698,7 @@ end
 local shouldPreBuffer = GetConVar("cl_cradio_prebuffer")
 
 function StationClass:QueuePreBuffer(curSong, nextSong)
-	if !shouldPreBuffer:GetBool() then
+	if !enabled:GetBool() or !shouldPreBuffer:GetBool() then
 		return
 	end
 

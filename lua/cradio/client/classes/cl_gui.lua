@@ -7,9 +7,14 @@ function GUIClass:__tostring()
     return classString
 end
 
+local enabled = GetConVar("cl_cradio")
 local gradientLeft, gradientRight = Color(0, 255, 80), Color(0, 210, 220)
 
 function GUIClass:Open()
+    if !enabled:GetBool() then
+        return
+    end
+
     local ply = LocalPlayer()
 
     -- Non-drivers cannot control the radio.
