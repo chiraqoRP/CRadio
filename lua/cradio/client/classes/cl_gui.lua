@@ -108,6 +108,7 @@ function GUIClass:GetHovered(elementCount)
 end
 
 local circles = include("circles.lua")
+local hideHUD = false
 local offString = "Radio Off"
 local iconSize = 64
 local lastHovered = 0
@@ -133,7 +134,7 @@ function GUIClass:BuildFrame()
         self:FadeIn(0.15)
 
         -- Makes GM:HUDShouldDraw return false.
-        CLib.SetHideHUD(true)
+        hideHUD = true
     end
 
     motherFrame:PostInit()
@@ -144,7 +145,7 @@ function GUIClass:BuildFrame()
                 pnl:Close()
             end
 
-            CLib.SetHideHUD(false)
+            hideHUD = false
         end)
     end
 
@@ -845,6 +846,13 @@ function GUIClass:DoPlayNotification(song, radioChannel, ent)
 
     self.NotificationPanel = frame
 end
+
+-- This is here because HUDShouldDraw hooks are super expensive.
+hook.Add("HUDShouldDraw", "CRadio.HideHUD", function()
+    if hideHUD then
+        return false
+    end
+end)
 
 surface.CreateFont("CRadio.Main", {
     font = "Tahoma",
