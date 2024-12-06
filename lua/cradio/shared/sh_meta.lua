@@ -26,7 +26,7 @@ if CLIENT then
     end
 
     function ENTITY:SetRadioChannel(channel)
-        -- Prevent any existing audio channel from being discarded and continuing to play.
+        -- Prevent any existing audio channel from being dereferenced and continuing to play.
         if self.acRadioChannel then
             self:StopRadioChannel()
         end
@@ -195,12 +195,21 @@ if CLIENT then
         end)
     end
 
+    -- WORKAROUND: IGModAudioChannel can't be indexed like a table, so we have to do this.
+    local fadingChannels = {}
+
+    function AUDIOCHANNEL:IsFading()
+        return fadingChannels[self]
+    end
+
     local hookFadeFormat = "CRadio.Fade-%i"
 
     function AUDIOCHANNEL:DoFade(length, from, to, callback)
-        if !length then
+        if !length or from == to then
             return
         end
+
+        fadingChannels[self] = true
 
         local identifier = nil
         local thinkHooks = hook.GetTable().Think
@@ -245,6 +254,8 @@ if CLIENT then
                 didFade = true
 
                 -- print("AUDIOCHANNEL:DoFade | Length higher, ", identifier, " removed!")
+
+                fadingChannels[self] = nil
 
                 hook.Remove("Think", identifier)
             end

@@ -66,7 +66,7 @@ if CLIENT then
             end
 
             for ent, channel in pairs(radioChannels) do
-                if !channel or !channel:IsValid() or math.Round(old, 3) != math.Round(channel:GetVolume(), 3) then
+                if !channel or !channel:IsValid() or channel:IsFading() then
                     return
                 end
 
@@ -75,7 +75,7 @@ if CLIENT then
                 -- PREBUFFER:
                 local preBufferChannel = ent.acPreBuffer
 
-                if !preBufferChannel or !preBufferChannel:IsValid() or math.Round(old, 3) != math.Round(preBufferChannel:GetVolume(), 3) then
+                if !preBufferChannel or !preBufferChannel:IsValid() or preBufferChannel:IsFading() then
                     return
                 end
 
