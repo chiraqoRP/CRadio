@@ -222,6 +222,82 @@ else
         veh:StopRadioChannel()
     end)
 
+    local loopback = GetConVar("voice_loopback")
+    local shouldLower = GetConVar("cl_cradio_lower_on_speak")
+    local playersSpeaking = 0
+
+    hook.Add("PlayerStartVoice", "CRadio.LowerVolume", function(ply)
+        local client = LocalPlayer()
+
+        if ply == client and !loopback:GetBool() then
+            return
+        end
+
+        playersSpeaking = playersSpeaking + 1
+
+        if playersSpeaking <= 0 or !shouldLower:GetBool() then
+            return
+        end
+
+        local vehicle = CLib.GetVehicle()
+
+        if !IsValid(vehicle) then
+            return
+        end
+
+        local radioChannel = vehicle:GetRadioChannel()
+
+        if !radioChannel or !radioChannel:IsValid() or radioChannel:IsFading() then
+            return
+        end
+
+        local volume = radioChannel:GetVolume()
+        local newVol = math.min(volume * 0.75, 0.1)
+
+        if volume == newVol then
+            return
+        end
+
+        radioChannel:DoFade(0.5, volume, newVol)
+    end)
+
+    local defaultVol = GetConVar("cl_cradio_volume")
+
+    hook.Add("PlayerEndVoice", "CRadio.ResetVolume", function(ply)
+        local client = LocalPlayer()
+
+        if ply == client and !loopback:GetBool() then
+            return
+        end
+
+        playersSpeaking = playersSpeaking - 1
+
+        if playersSpeaking != 0 or !shouldLower:GetBool() then
+            return
+        end
+
+        local vehicle = CLib.GetVehicle()
+
+        if !IsValid(vehicle) then
+            return
+        end
+
+        local radioChannel = vehicle:GetRadioChannel()
+
+        if !radioChannel or !radioChannel:IsValid() then
+            return
+        end
+
+        local oldVol = radioChannel:GetVolume()
+        local volume = defaultVol:GetFloat()
+
+        if oldVol == volume then
+            return
+        end
+
+        radioChannel:DoFade(0.5, oldVol, volume)
+    end)
+
     hook.Add("PlayerButtonUp", "CRadio.GUI.Release", function(ply, button)
         if !(button == KEY_SLASH and IsFirstTimePredicted()) then
             return
