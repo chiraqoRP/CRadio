@@ -192,7 +192,7 @@ function SongClass:GetFile()
 		return
 	end
 
-	return self.File
+	return string.lower(self.File or "")
 end
 
 function SongClass:GetFileExists()
@@ -200,10 +200,12 @@ function SongClass:GetFileExists()
 		return false
 	end
 
+	local filePath = self:GetFile()
+
 	-- Only check if we have an actual filepath provided.
-	if self.FileExists == nil and string.IsValid(self.File) then
+	if self.FileExists == nil and string.IsValid(filePath) then
 		-- Sound files are not automatically precached, so its fine to place them in sounds.
-		self.FileExists = file.Exists(self.File, "GAME")
+		self.FileExists = file.Exists(filePath, "GAME")
 	end
 
 	return self.FileExists or false
