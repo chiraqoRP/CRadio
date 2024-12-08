@@ -123,10 +123,6 @@ function StationClass:GetIcon()
 	return self.Icon or defaultIcon
 end
 
-function StationClass:ShouldRandomize()
-	return self.Randomize
-end
-
 function StationClass:GetStartTime()
 	return self.StartTime or CurTime()
 end
@@ -242,9 +238,9 @@ local function ShuffleKnown(tbl, count)
 	end
 end
 
-local function InsertSubPlaylist(playlist, subplaylist, index)
-	local songs = subplaylist:GetSongs()
-	local shouldRandomize = subplaylist:ShouldRandomize()
+local function InsertSubPlaylist(playlist, subPlaylist, index)
+	local songs = subPlaylist:GetSongs()
+	local shouldRandomize = subPlaylist:ShouldRandomize()
 	local songCount = #songs
 	local songsToInsert = {}
 	local finalCount = 0
@@ -550,7 +546,7 @@ function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
 
 	-- We have no audio file and there is no valid URL provided, so halt and print an error.
 	if !playSong then
-		ErrorNoHalt(self, " - No file present or valid URL for ", curSong, ".")
+		ErrorNoHalt(self, " - No file present or valid URL for ", tostring(curSong), ".")
 
 		StopStatic(ent)
 
@@ -566,6 +562,8 @@ local defaultVol = GetConVar("cl_cradio_volume")
 
 function StationClass:ProcessRadioChannel(ent, channel, shouldBuffer, doFade, callback)
 	if !IsValid(channel) then
+		ErrorNoHalt(self, " - Channel for ", tostring(curSong), " invalid before processing. Ensure file/URL is accessible.")
+
 		StopStatic(ent)
 
 		return
