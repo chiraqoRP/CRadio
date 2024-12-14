@@ -63,7 +63,7 @@ if CLIENT then
 
         self.acRadioChannel = nil
 
-        timer.Remove("CRadio_PreBuffer")
+        timer.Remove("CRadio.PreBuffer")
     end
 
     local AUDIOCHANNEL = FindMetaTable("IGModAudioChannel")
@@ -80,7 +80,7 @@ if CLIENT then
     end
 
     local function KillBufferHook(identifier, channel, parent)
-        hook.Remove("Think", identifier)
+        hook.Remove("Tick", identifier)
 
         if channel and channel:IsValid() then
             channel:Stop()
@@ -111,28 +111,20 @@ if CLIENT then
 
     function AUDIOCHANNEL:DoBuffer(parent, station, doFade, bufferCallback)
         local identifier = nil
-        local thinkHooks = hook.GetTable().Think
+        local tickHooks = hook.GetTable().Tick
 
         repeat
             -- Creates our hook's identifier. (example: CRadio.Buffer-2048)
             identifier = string.format(hookBufferFormat, math.random(1, 32768))
-        -- If there's already a think hook with this identifier, retry.
-        until !thinkHooks[identifier]
+        -- If there's already a tick hook with this identifier, retry.
+        until !tickHooks[identifier]
 
         local lastCheck, stalledTime = 0, nil
         local curSong = station:GetCurrentSong()
         local songLength = curSong:GetLength()
         local wasValid, lastBufferedTime = false, 0
 
-        hook.Add("Think", identifier, function()
-            local curTime = CurTime()
-
-            if (lastCheck or 0) + 0.05 > curTime then
-                return
-            end
-
-            lastCheck = curTime
-
+        hook.Add("Tick", identifier, function()
             local isValid = self and self:IsValid() and IsValid(parent)
 
             -- Detect if the audio channel was stopped.
@@ -212,25 +204,25 @@ if CLIENT then
         fadingChannels[self] = true
 
         local identifier = nil
-        local thinkHooks = hook.GetTable().Think
+        local tickHooks = hook.GetTable().Tick
 
         repeat
             -- Creates our hook's identifier. (example: CRadio.Fade-2048)
             identifier = string.format(hookFadeFormat, math.random(1, 32768))
-        -- If there's already a think hook with this identifier, retry.
-        until !thinkHooks[identifier]
+        -- If there's already a tick hook with this identifier, retry.
+        until !tickHooks[identifier]
 
         local startTime = CurTime()
         local wasValid = false
         local didFade = false
 
-        hook.Add("Think", identifier, function()
+        hook.Add("Tick", identifier, function()
             local curTime = CurTime()
             local isValid = self and self:IsValid()
 
             -- Detect if the audio channel was stopped.
             if wasValid and !isValid then
-                hook.Remove("Think", identifier)
+                hook.Remove("Tick", identifier)
 
                 return
 
@@ -257,7 +249,7 @@ if CLIENT then
 
                 fadingChannels[self] = nil
 
-                hook.Remove("Think", identifier)
+                hook.Remove("Tick", identifier)
             end
 
             wasValid = isValid

@@ -94,7 +94,7 @@ function StationClass:GetSanitizedName()
 	return self.SanitizedName
 end
 
-local timerFormat = "CRadio_Playlist-%s"
+local timerFormat = "CRadio.Playlist-%s"
 local dangerousPattern = '[.*"/\\<>:|?]'
 local emptyString = ""
 
@@ -702,7 +702,7 @@ function StationClass:QueuePreBuffer(curSong, nextSong)
 
 	local preBufferDelay = math.max(curSong:GetTimeLeft() - 3, 1)
 
-	timer.Create("CRadio_PreBuffer", preBufferDelay, 1, function()
+	timer.Create("CRadio.PreBuffer", preBufferDelay, 1, function()
 		local vehicle = CLib.GetVehicle()
 
 		if !IsValid(vehicle) then
@@ -900,8 +900,8 @@ function StationClass:DebugPreBuffer()
 	end
 
 	MsgC(color_white, "-----------------------\n")
-	MsgC(color_white, "Timer Exists:           ", greenColor, timer.Exists("CRadio_PreBuffer"), color_white, "!\n")
-	MsgC(color_white, "Timer Left:             ", greenColor, math.Round(timer.TimeLeft("CRadio_PreBuffer") or 0, 4), color_white, " seconds!\n")
+	MsgC(color_white, "Timer Exists:           ", greenColor, timer.Exists("CRadio.PreBuffer"), color_white, "!\n")
+	MsgC(color_white, "Timer Left:             ", greenColor, math.Round(timer.TimeLeft("CRadio.PreBuffer") or 0, 4), color_white, " seconds!\n")
 	MsgC(color_white, "preBufferChannel:       ", greenColor, channel, color_white, "!\n")
 	MsgC(color_white, "-----------------------\n")
 end
