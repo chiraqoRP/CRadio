@@ -114,6 +114,7 @@ end
 
 local circles = include("circles.lua")
 local hideHUD = false
+local blurMat = Material("pp/blurscreen")
 local offString = "Radio Off"
 local iconSize = 64
 local lastHovered = 0
@@ -136,7 +137,8 @@ function GUIClass:BuildFrame()
 
         self.Elements = {}
 
-        self:FadeIn(0.15)
+        self:SetAlpha(0)
+        self:AlphaTo(255, 0.15)
 
         -- Makes GM:HUDShouldDraw return false.
         hideHUD = true
@@ -145,13 +147,36 @@ function GUIClass:BuildFrame()
     motherFrame:PostInit()
 
     function motherFrame:FancyClose()
-        self:FadeOut(0.15, function(data, pnl)
+        self:AlphaTo(0, 0.15, 0, function(data, pnl)
             if IsValid(pnl) then
                 pnl:Close()
             end
 
             hideHUD = false
         end)
+    end
+
+    function motherFrame:BlurBackground(dark)
+        self.BlurDynamic = self.BlurDynamic or 0
+    
+        local layers, density = 1, 1
+        local x, y = self:LocalToScreen(0, 0)
+        local frameTime, Num = 1 / RealFrameTime(), 5
+    
+        surface.SetDrawColor(255, 255, 255, 100)
+        surface.SetMaterial(blurMat)
+    
+        for i = 1, Num do
+            blurMat:SetFloat("$blur", (i / layers) * density * self.BlurDynamic)
+            blurMat:Recompute()
+            render.UpdateScreenEffectTexture()
+            surface.DrawTexturedRect(-x, -y, ScrW(), ScrH())
+        end
+    
+        surface.SetDrawColor(0, 0, 0, (dark or 150) * self.BlurDynamic)
+        surface.DrawRect(0, 0, self:GetSize())
+    
+        self.BlurDynamic = math.Clamp(self.BlurDynamic + (1 / frameTime) * 7, 0, 1)
     end
 
     function motherFrame:Paint(w, h)
@@ -463,11 +488,31 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
 
     stationPanel:PostInit()
 
-    function stationPanel:Paint(w, h)
-        local isHovered = self.isHovered
+    function stationPanel:CalculateFade(speed, customHover)
+        local hovered = self:IsHovered()
+    
+        -- This is a bool that can be provided for panels that have a custom hover method.
+        if customHover != nil then
+            hovered = customHover
+        end
+    
+        local buf, step = self.__hoverBuf or 0, RealFrameTime() * speed
+    
+        if hovered and buf < 1 then
+            buf = math.min(1, step + buf)
+        elseif !hovered and buf > 0 then
+            buf = math.max(0, buf - step)
+        end
+    
+        self.__hoverBuf = buf
+        buf = math.EaseInOut(buf, 0.2, 0.2)
+    
+        return buf
+    end
 
+    function stationPanel:Paint(w, h)
         -- Returns a ascending/descending float to use with lerp for alpha fade.
-        local buf = self:CalculateFade(2, isHovered)
+        local buf = self:CalculateFade(2, self.isHovered)
         local alpha, clr = Lerp(buf, 150, 100), Lerp(buf, 20, 40)
         local iconAlpha = Lerp(buf, 75, 255)
 
