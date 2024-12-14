@@ -176,7 +176,13 @@ function SongClass:GetCurTime()
 		return 0
 	end
 
-	return CurTime() - self.StartTime
+	local curTime = CurTime()
+
+	if self:GetEndTime() < curTime then
+		return 0
+	end
+
+	return curTime - self.StartTime
 end
 
 function SongClass:GetTimeLeft()
