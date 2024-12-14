@@ -15,7 +15,7 @@ function SongClass:__constructor(name, songStruct)
 	self.Artist = songStruct.Artist
 	self.Release = songStruct.Release
 	self.Length = songStruct.Length or 0
-	self.Gap = songStruct.Gap or 0.5
+	self.Gap = songStruct.Gap or 0
 	self.Chance = songStruct.Chance or 1.0
 
 	-- Without this, some string ops will cause halting errors.

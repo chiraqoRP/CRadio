@@ -27,7 +27,7 @@ local coolSong = CRadio:Song("Cool Song 1", {
 
     -- Adds a gap of silence after this song has finished playing (Previous song --> Previous song's gap --> Song --> Current song's gap).
     -- Very similar to how redbook CDs handle gaps.
-    -- Defaults to 0.5 seconds.
+    -- Defaults to 0.
     Gap = 1.0,
 
     -- Controls the chance of the song remaining in the playlist once a new one is created.
