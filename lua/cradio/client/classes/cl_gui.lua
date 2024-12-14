@@ -401,6 +401,11 @@ local function CalcOutlineCircle(x, y, radius, thickness, color, mat)
     outlineCircle:SetColor(color)
     outlineCircle:SetMaterial(mat)
 
+    -- HACK: https://github.com/SneakySquid/Circles/blob/master/circles.lua#L244
+    -- Setting this to false seems to not affect visuals at all and MASSIVELY reduces the cost of drawing.
+    -- Doing this brings the drawing in PANEL:Paint from 10k calls averaging ~0.010ms per call to not even hitting the top 10 in FProfiler.
+    outlineCircle:SetChildCircle(false)
+
     return outlineCircle
 end
 
@@ -503,7 +508,7 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
             local cNet = CRadio:GetNet()
 
             -- If true, stops this vehicle's audio channel for all listeners.
-            local shouldStop = (isOffButton and false)
+            local shouldStop = isOffButton and false
 
             -- If we don't stop playback, switches all listeners audio channels to one for this station. 
             cNet:SendPlayRequest(shouldStop or station)
@@ -682,7 +687,11 @@ function GUIClass:DoPlayNotification(song, radioChannel, ent)
 
     -- Material expects a string, so we provide an empty (nil) one if our song has no cover.
     -- We also set it to smooth if we're scaling, as IMaterial scaling is awful and smooth improves it slightly.
-    local coverMat, _ = Material(song:GetCover() or "", scaleMul != 1.0 and "smooth" or "")
+    local cover, coverMat = song:GetCover(), nil
+
+    if string.IsValid(cover) then
+        coverMat, _ = Material(cover, scaleMul != 1.0 and "smooth" or "")
+    end
 
     function frame:Paint(w, h)
         draw.RoundedBox(4, 0, 0, w, h, backgroundColor)
@@ -803,11 +812,11 @@ function GUIClass:DoPlayNotification(song, radioChannel, ent)
 
         -- If our song is not playing, the buffering has halted, and it is not fully buffered, it has failed to load.
         if !isPlaying and bufferedTime == self.BufferedTime and bufferedTime < seekTime then
-            self.StalledTime = self.StalledTime or CurTime()
+            self.StalledTime = self.StalledTime or SysTime()
 
             -- DoBuffering waits before considering it a failed load and removing the channel.
             -- We do the same with slightly less delay so we can inform the user.
-            if !isPlaying and bufferedTime == self.BufferedTime and (CurTime() - self.StalledTime) >= math.min(4, failureDelay:GetFloat() - 1) then
+            if !isPlaying and bufferedTime == self.BufferedTime and (SysTime() - self.StalledTime) >= math.min(4, failureDelay:GetFloat() - 1) then
                 self.BufferingFailed = true
 
                 return
