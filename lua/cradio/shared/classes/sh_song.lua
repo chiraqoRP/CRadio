@@ -215,6 +215,41 @@ function SongClass:GetURL()
 	return self.URL
 end
 
+local m3DFlags = "3d mono %s"
+local urlFlags = "noplay noblock"
+local fileFlags = "noplay"
+
+function SongClass:GetChannelFlags(enable3D)
+	local curTime = self:GetCurTime()
+	local url = self:GetURL()
+
+	-- Checks if our URL is a non-empty string, and if it is a valid URL (ie: https://urlhere.domain).
+	local urlValid = string.Left(url, 4) == "http"
+
+	-- If the song's CurTime is below a reasonable margin (0 <--> 0.5 seconds), do not use noblock.
+	-- Doing this saves bandwidth and some performance (no need for a buffer callback).
+	local channelFlags = urlValid and curTime > 0.5 and urlFlags or fileFlags
+
+	-- 3D only works properly with the mono channel flag.
+	if enable3D then
+		channelFlags = string.format(m3DFlags, channelFlags)
+	end
+
+	return channelFlags
+end
+
+function SongClass:GetPlayMethod()
+	-- Checks if our URL is a non-empty string, and if it is a valid URL (ie: https://urlhere.domain).
+	local urlValid = string.Left(self:GetURL(), 4) == "http"
+	local fileValid = self:GetFileExists()
+
+	-- This just returns false if we don't have a URL or (valid) file.
+	local method = fileValid and sound.PlayFile or (urlValid and sound.PlayURL) or false
+	local path = fileValid and self:GetFile() or self:GetURL()
+
+	return method, path
+end
+
 function SongClass:GetCover()
 	return self.Cover
 end

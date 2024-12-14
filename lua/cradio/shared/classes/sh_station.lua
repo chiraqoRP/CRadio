@@ -485,9 +485,6 @@ local function StopStatic(ent)
 end
 
 local enabled = GetConVar("cl_cradio")
-local m3DFlags = "3d mono %s"
-local urlFlags = "noplay noblock"
-local fileFlags = "noplay"
 
 function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
 	if SERVER or !IsValid(ent) or !enabled:GetBool() then
@@ -507,8 +504,6 @@ function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
 	end
 
 	local curSongTime = curSong:GetCurTime()
-	local url = curSong:GetURL()
-	local fileValid, audioFile = curSong:GetFileExists(), curSong:GetFile()
 
 	-- print("ENTITY:RadioChannel | curSongTime: ", curSongTime)
 	-- MsgC("Do we already have a static sound active?", Color(0, 255, 0), self.StaticSound, "\n")
@@ -524,25 +519,7 @@ function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
 		ent.StaticSound = staticSnd
 	end
 
-	-- Checks if our URL is a non-empty string, and if it is a valid URL (ie https://urlhere.domain).
-	local urlValid = string.Left(url, 4) == "http"
-
-	-- If the song's CurTime is below a reasonable margin (0 <--> 0.5 seconds), do not use noblock.
-	-- Doing this saves bandwidth and some performance (no need for a buffer callback).
-	local channelFlags = urlValid and curSongTime > 0.5 and urlFlags or fileFlags
-
-	-- 3D only works properly with the mono channel flag.
-	if enable3D then
-		channelFlags = string.format(m3DFlags, channelFlags)
-	end
-
-	-- MsgC("ENTITY:RadioChannel | channelFlags: ", Color(0, 255, 0), channelFlags, "\n")
-	-- MsgC("ENTITY:RadioChannel | doFade: ", Color(0, 255, 0), doFade, "\n")
-
-	-- If a filepath is defined and the file exists, we use that.
-	-- If no file is present, fallback to the URL if valid.
-	-- Otherwise, stop the static sound and print an error.
-	local playSong = fileValid and sound.PlayFile or (urlValid and sound.PlayURL) or false
+	local playSong, path = curSong:GetPlayMethod()
 
 	-- We have no audio file and there is no valid URL provided, so halt and print an error.
 	if !playSong then
@@ -553,7 +530,9 @@ function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
 		return
 	end
 
-	playSong(audioFile or url, channelFlags, function(channel, errorID, errorName)
+	local channelFlags = curSong:GetChannelFlags(enable3D)
+
+	playSong(path, channelFlags, function(channel, errorID, errorName)
 		self:ProcessRadioChannel(ent, channel, curSongTime > 0.5, doFade, callback)
 	end)
 end
@@ -562,7 +541,7 @@ local defaultVol = GetConVar("cl_cradio_volume")
 
 function StationClass:ProcessRadioChannel(ent, channel, shouldBuffer, doFade, callback)
 	if !IsValid(channel) then
-		ErrorNoHalt(self, " - Channel for ", tostring(curSong), " invalid before processing. Ensure file/URL is accessible.")
+		ErrorNoHalt(self, " - Channel for ", tostring(self.Playist[1]), " invalid before processing. Ensure file/URL is accessible.")
 
 		StopStatic(ent)
 
@@ -575,7 +554,9 @@ function StationClass:ProcessRadioChannel(ent, channel, shouldBuffer, doFade, ca
 		return
 	end
 
-	if channel:Is3D() then
+	local is3D = channel:Is3D()
+
+	if is3D then
 		channel:Set3DEnabled(true)
 	end
 
@@ -611,7 +592,7 @@ function StationClass:ProcessRadioChannel(ent, channel, shouldBuffer, doFade, ca
 		return
 	end
 
-	self:QueuePreBuffer(self.Playlist[1], self.Playlist[2])
+	self:QueuePreBuffer(self.Playlist[1], self.Playlist[2], is3D)
 end
 
 function StationClass:UpdateRadioChannels()
@@ -685,7 +666,7 @@ function StationClass:UpdateRadioChannels()
 
 		-- PREBUFFER:
 		if !ent.CRadio and ent == ourVehicle then
-			self:QueuePreBuffer(curSong, self.Playlist[2])
+			self:QueuePreBuffer(curSong, self.Playlist[2], is3D)
 		end
 
 		-- Mark the entity as already updated so we don't do so again.
@@ -695,7 +676,7 @@ end
 
 local shouldPreBuffer = GetConVar("cl_cradio_prebuffer")
 
-function StationClass:QueuePreBuffer(curSong, nextSong)
+function StationClass:QueuePreBuffer(curSong, nextSong, enable3D)
 	if !enabled:GetBool() or !shouldPreBuffer:GetBool() then
 		return
 	end
@@ -715,19 +696,7 @@ function StationClass:QueuePreBuffer(curSong, nextSong)
 			return
 		end
 
-		local url = nextSong:GetURL()
-		local fileValid, audioFile = nextSong:GetFileExists(), nextSong:GetFile()
-
-		-- Checks if our URL is a non-empty string, and if it is a valid URL (ie https://urlhere.domain).
-		local urlValid = string.Left(url, 4) == "http"
-
-		-- 3D only works properly with the mono channel flag.
-		local channelFlags = enable3D and string.format(m3DFlags, fileFlags) or fileFlags
-
-		-- If a filepath is defined and the file exists, we use that.
-		-- If no file is present, fallback to the URL if valid.
-		-- Otherwise, print an error.
-		local playSong = fileValid and sound.PlayFile or (urlValid and sound.PlayURL) or false
+		local playSong, path = nextSong:GetPlayMethod()
 
 		-- We have no audio file and there is no valid URL provided, so halt and print an error.
 		if !playSong then
@@ -736,7 +705,9 @@ function StationClass:QueuePreBuffer(curSong, nextSong)
 			return
 		end
 
-		playSong(audioFile or url, channelFlags, function(channel, errorID, errorName)
+		local channelFlags = nextSong:GetChannelFlags(enable3D)
+
+		playSong(path, channelFlags, function(channel, errorID, errorName)
 			print("prebuffer channel initialized: ", SysTime())
 
 			if !IsValid(channel) then
