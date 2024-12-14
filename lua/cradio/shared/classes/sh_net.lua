@@ -205,8 +205,6 @@ if CLIENT then
     net.Receive("CRadio.NetworkPlaylist", function(len)
 		local cNet = CRadio:GetNet()
 
-        MsgC(color_white, "[", Color(200, 0, 0), "CRadio", color_white, "] - CRadio.NetworkPlaylist received!", "\n")
-
 		cNet:ReceivePlaylist(len)
 	end)
 else

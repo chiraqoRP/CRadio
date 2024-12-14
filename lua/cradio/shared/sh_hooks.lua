@@ -8,8 +8,6 @@ if SERVER then
             CRadio:Initialize()
         end
 
-        MsgC(color_white, "[", Color(200, 0, 0), "CRadio", color_white, "] - PlayerFullLoad ran!", "\n")
-
         local cNet = CRadio:GetNet()
 
         -- Networks all playlists to the connected player.
@@ -17,7 +15,7 @@ if SERVER then
     end)
 
     hook.Add("PlayerEnteredVehicle", "CRadio.ControlRadio", function(ply, veh, role)
-        -- Get the real vehicle entity in case we're using simfphys/LVS.
+        -- Get the real vehicle entity in case we're using a custom base.
         veh = CLib.GetVehicle(veh)
 
         if simfphys and simfphys.IsCar(veh) then
@@ -40,7 +38,7 @@ if SERVER then
     end)
 
     hook.Add("PlayerLeaveVehicle", "CRadio.ControlRadio", function(ply, veh)
-        -- Get the real vehicle entity in case we're using simfphys/LVS.
+        -- Get the real vehicle entity in case we're using a custom base.
         veh = CLib.GetVehicle(veh)
 
         if !IsValid(veh) or (simfphys and simfphys.IsCar(veh)) then
@@ -85,8 +83,8 @@ if SERVER then
         end)
     end)
 else
-    hook.Add("PlayerEnteredVehicle", "CRadio.ControlRadio", function(ply, veh)
-        -- Get the real vehicle entity in case we're using simfphys/LVS.
+    local function OnPlayerEnteredVehicle(ply, veh)
+        -- Get the real vehicle entity in case we're using a custom base.
         veh = CLib.GetVehicle(veh)
 
         local plyTable = ply:GetTable()
@@ -107,14 +105,14 @@ else
 
             currentStation:RadioChannel(veh, false, true)
         end
-    end)
+    end
 
-    hook.Add("PlayerLeaveVehicle", "CRadio.ControlRadio", function(ply, veh)
+    local function OnPlayerLeaveVehicle(ply, veh)
         local cGUI = CRadio:GetGUI()
 
         cGUI:Close()
 
-        -- Get the real vehicle entity in case we're using simfphys/LVS.
+        -- Get the real vehicle entity in case we're using a custom base.
         veh = CLib.GetVehicle(veh)
 
         local plyTable = ply:GetTable()
@@ -134,6 +132,40 @@ else
                 veh:StopRadioChannel(true)
             end
         end)
+    end
+
+    local PLAYER = FindMetaTable("Player")
+    local vClient = nil
+    local hasEntered = false
+    local wasInVehicle, lastVehicle = false, nil
+    local plyInVehicle, plyGetVehicle = PLAYER.InVehicle, PLAYER.GetVehicle
+
+    hook.Add("Tick", "CRadio.VehicleHandler", function()
+        vClient = vClient or LocalPlayer()
+
+        if vClient == NULL then
+            vClient = nil
+    
+            return
+        end
+
+        local inVehicle = plyInVehicle(vClient)
+
+        if inVehicle and !hasEntered then
+            local vehicle = plyGetVehicle(vClient)
+
+            OnPlayerEnteredVehicle(vClient, vehicle)
+
+            hasEntered = true
+            wasInVehicle, lastVehicle = true, vehicle
+        end
+
+        if hasEntered and wasInVehicle and !inVehicle then
+            OnPlayerLeaveVehicle(vClient, lastVehicle)
+
+            hasEntered = false
+            wasInVehicle, lastVehicle = false, nil
+        end
     end)
 
     local function StationVarChanged(ent, name, old, new)

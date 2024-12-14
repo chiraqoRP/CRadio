@@ -60,8 +60,6 @@ if CLIENT then
             local station = stations[i]
             local radioChannels = station:GetRadioChannels()
 
-            print("cl_cradio_volume - any channels?", !table.IsEmpty(radioChannels))
-
             if table.IsEmpty(radioChannels) then
                 continue
             end
