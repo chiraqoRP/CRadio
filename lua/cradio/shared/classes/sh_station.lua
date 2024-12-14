@@ -610,16 +610,6 @@ function StationClass:UpdateRadioChannels()
 	end
 
 	local ourVehicle = CLib.GetVehicle()
-	local cacheCheck = radioChannels[ourVehicle]
-
-	if cacheCheck and cacheCheck:IsValid() then
-		MsgC(color_white, "How much time was left on song for station [", Color(200, 0, 0), self.Name, color_white, "]: ", Color(0, 255, 0), (self.LastSong:GetLength() - self.LastSong:GetGap()) - cacheCheck:GetTime(), color_white, " seconds!\n")
-
-		MsgC(color_white, "Length (Def):   ", Color(0, 255, 0), self.LastSong:GetLength(), color_white, " seconds!\n")
-		MsgC(color_white, "Length (Act):   ", Color(0, 255, 0), cacheCheck:GetLength(), color_white, " seconds!\n")
-		MsgC(color_white, "Time:           ", Color(0, 255, 0), cacheCheck:GetTime(), color_white, " seconds!\n")
-	end
-
 	local updatedEnts = {}
 
 	for ent, channel in pairs(radioChannels) do
