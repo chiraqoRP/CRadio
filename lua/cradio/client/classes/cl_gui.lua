@@ -847,7 +847,7 @@ function GUIClass:DoPlayNotification(song, radioChannel, ent)
 
         -- If our channel is removed, start the kill timer.
         if channelDead then
-            frame:Kill()
+            frame:Kill(1)
 
             return
         end
@@ -883,20 +883,16 @@ function GUIClass:DoPlayNotification(song, radioChannel, ent)
 
         -- If the channel is playing and we haven't started the kill timer, do so.
         if isPlaying and !self.StartedRemoveAnim then
-            self.EndTime = self.EndTime or sysTime
-
-            if (sysTime - self.EndTime) >= 4 then
-                frame:Kill()
-            end
+            frame:Kill(4)
         end
     end
 
-    function frame:Kill()
+    function frame:Kill(delay)
         if self.StartedRemoveAnim then
             return
         end
 
-        frame:MoveTo(ScrW() + 36, y, 2, 0, 0.25, function(animData, pFrame)
+        frame:MoveTo(ScrW() + 36, y, 2, delay or 0, 0.25, function(animData, pFrame)
             pFrame:Remove()
         end)
 
