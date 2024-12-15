@@ -856,7 +856,7 @@ function GUIClass:DoPlayNotification(song, radioChannel, ent)
         local isPlaying = radioChannel:GetState() == GMOD_CHANNEL_PLAYING
 
         -- If our song is not playing, the buffering has halted, and it is not fully buffered, it has failed to load.
-        if !isPlaying and bufferedTime == self.BufferedTime and bufferedTime < seekTime then
+        if !isPlaying and ((bufferedTime == self.BufferedTime and bufferedTime < seekTime) or self.StalledTime) then
             self.StalledTime = self.StalledTime or SysTime()
 
             -- DoBuffering waits before considering it a failed load and removing the channel.

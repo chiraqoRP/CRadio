@@ -119,16 +119,16 @@ if CLIENT then
         -- If there's already a tick hook with this identifier, retry.
         until !tickHooks[identifier]
 
-        local lastCheck, stalledTime = 0, nil
+        local stalledTime = nil
         local curSong = station:GetCurrentSong()
         local songLength = curSong:GetLength()
-        local wasValid, lastBufferedTime = false, 0
+        local lastBufferedTime = -1
 
         hook.Add("Tick", identifier, function()
             local isValid = self and self:IsValid() and IsValid(parent)
 
             -- Detect if the audio channel was stopped.
-            if wasValid and !isValid then
+            if !isValid then
                 KillBufferHook(identifier, self, parent)
 
                 -- print("ProcessChannel | Channel or parent entity invalid, buffering stopped!")
@@ -144,11 +144,11 @@ if CLIENT then
             -- print("DoBuffering | seekTime: ", seekTime)
 
             -- If our song hasn't buffered enough and hasn't moved since the last tick, we mark it as stalled.
-            if bufferedTime == lastBufferedTime and bufferedTime < seekTime then
+            if (math.floor(bufferedTime) == lastBufferedTime and bufferedTime < seekTime) or stalledTime then
                 stalledTime = stalledTime or SysTime()
 
                 -- If it remains stalled and doesn't advance within x defined seconds, we stop buffering and kill the channel.
-                if bufferedTime == lastBufferedTime and (SysTime() - stalledTime) >= failureDelay:GetFloat() then
+                if math.floor(bufferedTime) == lastBufferedTime and (SysTime() - stalledTime) >= failureDelay:GetFloat() then
                     -- MsgC(Color(203, 26, 219), "ProcessChannel | Channel buffering stalled, seeking stopped!\n")
 
                     KillBufferHook(identifier, self, parent)
@@ -182,8 +182,9 @@ if CLIENT then
                 return
             end
 
-            wasValid = isValid
-            lastBufferedTime = bufferedTime
+            if !stalledTime then
+                lastBufferedTime = math.floor(bufferedTime)
+            end
         end)
     end
 
@@ -213,7 +214,6 @@ if CLIENT then
         until !tickHooks[identifier]
 
         local startTime = SysTime()
-        local wasValid = false
         local didFade = false
 
         hook.Add("Tick", identifier, function()
@@ -221,7 +221,7 @@ if CLIENT then
             local isValid = self and self:IsValid()
 
             -- Detect if the audio channel was stopped.
-            if wasValid and !isValid then
+            if !isValid then
                 hook.Remove("Tick", identifier)
 
                 return
@@ -251,8 +251,6 @@ if CLIENT then
 
                 hook.Remove("Tick", identifier)
             end
-
-            wasValid = isValid
         end)
     end
 end
