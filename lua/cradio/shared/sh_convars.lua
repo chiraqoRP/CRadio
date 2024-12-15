@@ -82,6 +82,40 @@ if CLIENT then
         end
     end)
 
+    concommand.Add("cl_cradio_stop_channel", function(ply, cmd, args, argStr)
+        if ply != LocalPlayer() then
+            return
+        end
+
+        local vehicle = CLib.GetVehicle()
+
+        if !IsValid(vehicle) then
+            return
+        end
+
+        vehicle:StopRadioChannel(true)
+    end)
+
+    concommand.Add("cl_cradio_restart_channel", function(ply, cmd, args, argStr)
+        if ply != LocalPlayer() then
+            return
+        end
+
+        local vehicle = CLib.GetVehicle()
+
+        if !IsValid(vehicle) then
+            return
+        end
+
+        local station = vehicle:GetCurrentStation()
+
+        if !station then
+            return
+        end
+
+        station:RadioChannel(vehicle, false, true, false)
+    end)
+
     concommand.Add("cl_cradio_stop_static", function(ply, cmd, args, argStr)
         if ply != LocalPlayer() then
             return
