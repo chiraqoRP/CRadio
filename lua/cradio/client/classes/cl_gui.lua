@@ -120,8 +120,6 @@ local iconSize = 64
 local lastHovered = 0
 
 function GUIClass:BuildFrame()
-    local self2 = self
-
     local motherFrame = vgui.Create("DFrame")
     motherFrame:SetSize(self.CenterX * 2, self.CenterY * 2)
     motherFrame:Center()
@@ -179,20 +177,22 @@ function GUIClass:BuildFrame()
         self.BlurDynamic = math.Clamp(self.BlurDynamic + (1 / frameTime) * 7, 0, 1)
     end
 
+    local cX, cY = self.CenterX, self.CenterY
+
     function motherFrame:Paint(w, h)
         self:BlurBackground(0)
 
         -- If no station is hovered/playing, this prints "Radio Off" instead.
-        draw.SimpleTextOutlined(self.StationName or offString, "CRadio.Main", self2.CenterX, self2.CenterY - 25, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 2, color_black)
+        draw.SimpleTextOutlined(self.StationName or offString, "CRadio.Main", cX, cY - 25, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 2, color_black)
 
         -- If we have a station hovered/playing this will print the song's artist/name.
         -- Invisible otherwise.
         if self.SongArtist then
-            draw.SimpleTextOutlined(self.SongArtist, "CRadio.Main", self2.CenterX, self2.CenterY, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 2, color_black)
+            draw.SimpleTextOutlined(self.SongArtist, "CRadio.Main", cX, cY, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 2, color_black)
         end
 
         if self.SongName then
-            draw.SimpleTextOutlined(self.SongName, "CRadio.Main", self2.CenterX, self2.CenterY + 25, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 2, color_black)
+            draw.SimpleTextOutlined(self.SongName, "CRadio.Main", cX, cY + 25, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 2, color_black)
         end
     end
 
@@ -201,7 +201,7 @@ function GUIClass:BuildFrame()
 
     function motherFrame:DoElementHover()
         -- This gets the currently hovered element by checking the angle of the mouse's position.
-        local hoveredElement = self2:GetHovered(self.ElementCount) or lastHovered
+        local hoveredElement = GUIClass:GetHovered(self.ElementCount) or lastHovered
 
         -- print("hoveredElement: ", hoveredElement)
         -- print("lastHovered: ", lastHovered)
@@ -245,13 +245,14 @@ function GUIClass:BuildFrame()
         end
     end
 
+    local vehicle = self.Vehicle
     local lastStation = nil
 
     function motherFrame:InvalidateText()
-        local currentStation = self2.Vehicle:GetCurrentStation()
-        local station = self2.HoveredStation or currentStation
+        local currentStation = vehicle:GetCurrentStation()
+        local station = GUIClass.HoveredStation or currentStation
 
-        if self2.IsOffHovered then
+        if GUIClass.IsOffHovered then
             self.StationName =  nil
             self.SongArtist = nil
             self.SongName = nil
@@ -291,13 +292,13 @@ function GUIClass:BuildFrame()
     end
 
     function motherFrame:OnCursorMoved(x, y)
-        local cursorNearCenter = self2:IsCursorNearCenter(x, y)
+        local cursorNearCenter = GUIClass:IsCursorNearCenter(x, y)
 
         if cursorNearCenter then
             return true
         end
 
-        local isWithinBounds = self2:KeepCursorWithinBounds(x, y)
+        local isWithinBounds = GUIClass:KeepCursorWithinBounds(x, y)
 
         if !isWithinBounds then
             return true
@@ -459,8 +460,6 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
     stationPanel:SetPos(element.x - radius_m / 2, element.y - radius_m / 2)
     stationPanel:NoClipping(true)
 
-    local self2 = self
-
     function stationPanel:PostInit()
         self:SetCursor("blank")
 
@@ -539,9 +538,9 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
         return true
     end
 
-    function stationPanel:CreateTimer()
-        local vehicle = self2.Vehicle
+    local vehicle = self.Vehicle
 
+    function stationPanel:CreateTimer()
         timer.Create(self.TimerName, 1.5, 0, function()
             local isHovered = IsValid(self) and IsValid(vehicle) and self.isHovered
 
@@ -567,14 +566,13 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
     end
 
     function stationPanel:OnHovered()
-        local vehicle = self2.Vehicle
         local currentStation = vehicle:GetCurrentStation()
 
         -- Sets our hovered station.
-        self2.HoveredStation = station
+        GUIClass.HoveredStation = station
 
         -- There can only be one "off" button so we make it a separate var.
-        self2.IsOffHovered = isOffButton
+        GUIClass.IsOffHovered = isOffButton
 
         -- WORKAROUND: Prevent the hover sound from overlapping the open sound triggered in our class' Open method.
         if (SysTime() - self.InitTime) > 0.25 then
@@ -687,7 +685,6 @@ function GUIClass:DoPlayNotification(song, radioChannel, ent)
         return
     end
 
-    local self2 = self
     local y = 64 * scaleMul
     local oldFrame = self.NotificationPanel
 
@@ -702,7 +699,7 @@ function GUIClass:DoPlayNotification(song, radioChannel, ent)
             pFrame:Remove()
 
             -- Play the queued notification once the old notification is removed.
-            self2:DoPlayNotification(song, radioChannel)
+            self:DoPlayNotification(song, radioChannel)
         end)
 
         self.NotificationPanel = nil
