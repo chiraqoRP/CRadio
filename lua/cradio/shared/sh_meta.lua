@@ -182,9 +182,7 @@ if CLIENT then
                 return
             end
 
-            if !stalledTime then
-                lastBufferedTime = math.floor(bufferedTime)
-            end
+            lastBufferedTime = math.floor(bufferedTime)
         end)
     end
 
