@@ -80,7 +80,10 @@ function GUIClass:DoCloseRequest()
 
     local currentStation = self.Vehicle:GetCurrentStation()
 
-    if currentStation == self.HoveredStation then
+    -- This happens when the GUI is opened and closed with no mouse movement from the player.
+    local nothingHovered = !self.IsOffHovered and !IsValid(self.HoveredStation)
+
+    if nothingHovered or currentStation == self.HoveredStation then
         return
     end
 
