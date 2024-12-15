@@ -252,6 +252,15 @@ else
         end
 
         veh:StopRadioChannel()
+
+        local ourVehicle = CLib.GetVehicle()
+
+        -- Our vehicle is destroyed, so close the GUI to prevent errors.
+        if IsValid(ourVehicle) and veh == ourVehicle then
+            local cGUI = CRadio:GetGUI()
+
+            cGUI:Close()
+        end
     end)
 
     local loopback = GetConVar("voice_loopback")
