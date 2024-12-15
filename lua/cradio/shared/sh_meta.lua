@@ -106,7 +106,6 @@ if CLIENT then
     end
 
     local defaultVol = GetConVar("cl_cradio_volume")
-    local failureDelay = GetConVar("cl_cradio_failuredelay")
     local hookBufferFormat = "CRadio.Buffer-%i"
 
     function AUDIOCHANNEL:DoBuffer(parent, station, doFade, bufferCallback)
@@ -119,10 +118,7 @@ if CLIENT then
         -- If there's already a tick hook with this identifier, retry.
         until !tickHooks[identifier]
 
-        local stalledTime = nil
         local curSong = station:GetCurrentSong()
-        local songLength = curSong:GetLength()
-        local lastBufferedTime = -1
 
         hook.Add("Tick", identifier, function()
             local isValid = self and self:IsValid() and IsValid(parent)
@@ -136,26 +132,8 @@ if CLIENT then
                 return
             end
 
-            local bufferedTime = math.Round(self:GetBufferedTime(), 1)
-            local seekTime = math.Clamp(curSong:GetCurTime(), 0, songLength)
-
-            -- print("DoBuffering | bufferedTime: ", bufferedTime)
-            -- print("DoBuffering | songCurTime: ", curSong:GetCurTime())
-            -- print("DoBuffering | seekTime: ", seekTime)
-
-            -- If our song hasn't buffered enough and hasn't moved since the last tick, we mark it as stalled.
-            if (math.floor(bufferedTime) == lastBufferedTime and bufferedTime < seekTime) or stalledTime then
-                stalledTime = stalledTime or SysTime()
-
-                -- If it remains stalled and doesn't advance within x defined seconds, we stop buffering and kill the channel.
-                if math.floor(bufferedTime) == lastBufferedTime and (SysTime() - stalledTime) >= failureDelay:GetFloat() then
-                    -- MsgC(Color(203, 26, 219), "ProcessChannel | Channel buffering stalled, seeking stopped!\n")
-
-                    KillBufferHook(identifier, self, parent)
-
-                    return
-                end
-            end
+            local bufferedTime = self:GetBufferedTime()
+            local seekTime = curSong:GetCurTime()
 
             -- If our audio has buffered enough, we can seek to the desired time.
             if bufferedTime >= seekTime then
@@ -181,8 +159,6 @@ if CLIENT then
 
                 return
             end
-
-            lastBufferedTime = math.floor(bufferedTime)
         end)
     end
 

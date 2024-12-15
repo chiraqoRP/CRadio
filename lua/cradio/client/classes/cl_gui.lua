@@ -661,7 +661,6 @@ function GUIClass:BuildStationPanels()
 end
 
 local shouldNotification = GetConVar("cl_cradio_notification")
-local failureDelay = GetConVar("cl_cradio_failuredelay")
 
 -- We only scale down the notification panel and fonts if our width is below 2560.
 local screenWidth = ScrW()
@@ -805,10 +804,7 @@ function GUIClass:DoPlayNotification(song, radioChannel, ent)
             local bufferProgress = self.BufferProgress or 0
             local bufferStr = nil
 
-            -- This happens very rarely, only with URl streams.
-            if self.BufferingFailed then
-                bufferStr = "Failed to load!"
-            elseif bufferProgress == 1.00 then
+            if bufferProgress == 1.00 then
                 bufferStr = "Loaded!"
             else
                 -- We multiply the progress float to have three digits (1.00% --> 100.00%).
@@ -852,33 +848,19 @@ function GUIClass:DoPlayNotification(song, radioChannel, ent)
             return
         end
 
-        local bufferedTime, seekTime = math.Round(radioChannel:GetBufferedTime(), 1), song:GetCurTime()
-        local isPlaying = radioChannel:GetState() == GMOD_CHANNEL_PLAYING
-
-        -- If our song is not playing, the buffering has halted, and it is not fully buffered, it has failed to load.
-        if !isPlaying and ((bufferedTime == self.BufferedTime and bufferedTime < seekTime) or self.StalledTime) then
-            self.StalledTime = self.StalledTime or SysTime()
-
-            -- DoBuffering waits before considering it a failed load and removing the channel.
-            -- We do the same with slightly less delay so we can inform the user.
-            if !isPlaying and bufferedTime == self.BufferedTime and (SysTime() - self.StalledTime) >= math.min(4, failureDelay:GetFloat() - 1) then
-                self.BufferingFailed = true
-
-                return
-            end
-        end
-
         local sysTime = SysTime()
+        local bufferedTime, seekTime = radioChannel:GetBufferedTime(), song:GetCurTime()
         local bufferProgress = math.Clamp(bufferedTime / seekTime, 0, 1)
 
         self.StartTime = self.StartTime or sysTime
+
+        local isPlaying = radioChannel:GetState() == GMOD_CHANNEL_PLAYING
 
         -- If the channel is buffering, progress is below 98.00%, and 0.5s have passed we draw buffering progress.
         if (sysTime - self.StartTime) >= 0.5 and !isPlaying and bufferProgress < 0.98 then
             self.DrawBuffering = true
         end
 
-        self.BufferedTime = radioChannel:GetBufferedTime()
         self.BufferProgress = bufferProgress
 
         -- If the channel is playing and we haven't started the kill timer, do so.

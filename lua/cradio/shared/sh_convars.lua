@@ -4,7 +4,6 @@ if CLIENT then
     CreateClientConVar("cl_cradio_notification", 1, true, false, "", 0, 1)
     CreateClientConVar("cl_cradio_volume", 1.0, true, false, "", 0, 2.0)
     CreateClientConVar("cl_cradio_lower_on_speak", 1, true, false, "", 0, 1)
-    CreateClientConVar("cl_cradio_failuredelay", 5, true, false, "", 5, 30)
     CreateClientConVar("cl_cradio_gui_spawnmenu", 1, true, false, "Enables or disables overriding the spawnmenu.", 0, 1)
 
     cvars.AddChangeCallback("cl_cradio", function(name, old, new)
