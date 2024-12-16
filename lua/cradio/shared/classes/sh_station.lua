@@ -136,15 +136,11 @@ function StationClass:GetNextPlaylistRefresh()
 end
 
 function StationClass:SetNextPlaylistRefresh(nextRefresh)
-	-- print("SetNextPlaylistRefresh timer set to ", nextRefresh - CurTime(), " for station ", self.Name, "!")
-
 	self.NextPlaylistRefresh = nextRefresh
 
 	local delay = math.max(nextRefresh - CurTime(), 0)
 
 	timer.Create(self.TimerName, delay, 1, function()
-		-- print("timer for ", self, " triggered at CurTime:", CurTime(), ". supposed to be triggered at ", nextRefresh)
-
 		self:RefreshPlaylist()
 	end)
 end
@@ -397,8 +393,6 @@ function StationClass:RefreshPlaylist(isInitial)
 	-- Remove the finished song from our playlist.
 	local lastSong = table.remove(self.Playlist, 1)
 
-	-- print(self.Name, " playlist refreshed at CurTime:", CurTime(), ". ", lastSong and lastSong:GetName() or "nothing", " removed!")
-
 	self.LastSong = lastSong
 
 	local shouldRefresh = table.IsEmpty(self.Playlist)
@@ -439,8 +433,6 @@ end
 function StationClass:UpdateTime(didRefresh)
 	local curTime = CurTime()
 
-	-- print("StationClass:UpdateTime called at ", curTime, "!")
-
 	if didRefresh then
 		-- This stores the time the current playlist started at.
 		self.StartTime = curTime
@@ -458,8 +450,6 @@ function StationClass:UpdateTime(didRefresh)
 	end
 
 	newSong:SetStartTime(curTime)
-
-	-- print("StationClass:UpdateTime | NextPlaylistRefresh set to ", curTime + length, " at ", CurTime())
 
 	self:SetNextPlaylistRefresh(newSong:GetEndTime())
 end
@@ -505,16 +495,11 @@ function StationClass:RadioChannel(ent, enable3D, doFade, playStatic, callback)
 
 	local curSongTime = curSong:GetCurTime()
 
-	-- print("ENTITY:RadioChannel | curSongTime: ", curSongTime)
-	-- MsgC("Do we already have a static sound active?", Color(0, 255, 0), self.StaticSound, "\n")
-
 	-- Only create the sound if we don't already have one playing.
 	if playStatic and !ent.StaticSound then
 		local staticSnd = CreateSound(ent, "cradio/radio_change_static_looped.wav")
 		staticSnd:SetSoundLevel(80)
 		staticSnd:Play()
-
-		-- print("ENTITY:RadioChannel | staticSnd: ", staticSnd)
 
 		ent.StaticSound = staticSnd
 	end
@@ -559,8 +544,6 @@ function StationClass:ProcessRadioChannel(ent, channel, shouldBuffer, doFade, ca
 	if is3D then
 		channel:Set3DEnabled(true)
 	end
-
-	-- print("ProcessChannel | Buffering?: ", time > 2)
 
 	if shouldBuffer then
 		channel:DoBuffer(ent, self, doFade)
@@ -613,9 +596,6 @@ function StationClass:UpdateRadioChannels()
 	local updatedEnts = {}
 
 	for ent, channel in pairs(radioChannels) do
-		-- print("StationClass:UpdateRadioChannels | ent/channel: ", ent, channel)
-		-- print("StationClass:UpdateRadioChannels | alreadyUpdated: ", updatedEnts[ent])
-
 		local alreadyUpdated = updatedEnts[ent]
 
 		if alreadyUpdated then
@@ -698,8 +678,6 @@ function StationClass:QueuePreBuffer(curSong, nextSong, enable3D)
 		local channelFlags = nextSong:GetChannelFlags(enable3D)
 
 		playSong(path, channelFlags, function(channel, errorID, errorName)
-			print("prebuffer channel initialized: ", SysTime())
-
 			if !IsValid(channel) then
 				return
 			end

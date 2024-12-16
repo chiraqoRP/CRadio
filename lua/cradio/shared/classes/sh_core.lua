@@ -21,8 +21,6 @@ function CoreClass:__constructor()
 end
 
 function CoreClass:Initialize()
-	-- print("[Core Object] - CRadio | Initialize called!")
-
 	if SERVER then
 		for i = 1, #self.SequentialStations do
 			local station = self.SequentialStations[i]
@@ -32,8 +30,6 @@ function CoreClass:Initialize()
 			end
 
 			station:RefreshPlaylist(true)
-
-			-- print("[Core Object] - CRadio | station ", station:GetName(), " initialized!")
 		end
 	end
 

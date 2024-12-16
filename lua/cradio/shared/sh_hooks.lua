@@ -189,8 +189,6 @@ else
             return
         end
 
-        -- print("StationVarChanged | station: ", station)
-
         local curSong = station:GetCurrentSong()
         local cGUI = CRadio:GetGUI()
 
@@ -222,8 +220,6 @@ else
     local radioVar = "CRadio.RadioState"
 
     hook.Add("EntityNetworkedVarChanged", "CRadio.RadioChange", function(ent, name, old, new)
-        -- print("isOurVar? ", name == stationVar or name == radioVar)
-
         -- If the var changed isn't our NW2 var, we do nothing.
         if name == stationVar then
             -- Handles the "CRadio.Station" NW2 var.

@@ -206,9 +206,6 @@ function GUIClass:BuildFrame()
         -- This gets the currently hovered element by checking the angle of the mouse's position.
         local hoveredElement = GUIClass:GetHovered(self.ElementCount) or lastHovered
 
-        -- print("hoveredElement: ", hoveredElement)
-        -- print("lastHovered: ", lastHovered)
-
         if hoveredElement != lastHovered then
             -- We have to add 4 to the child index because of DFrame's internal child panels.
             local hoveredPanel = self:GetChild(hoveredElement + 4)
@@ -563,8 +560,6 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
     end
 
     function stationPanel:KillTimer()
-        -- print("stationPanel | timer killed for ", self.Station)
-
         timer.Remove(self.TimerName)
     end
 

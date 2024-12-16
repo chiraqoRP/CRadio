@@ -6,8 +6,6 @@ function NetClass:Initialize(ply)
 		return
 	end
 
-	-- print("[Net Object] - CRadio | Initialized!")
-
 	local stations = CRadio:GetStations(true)
 
 	self:NetworkAllPlaylists(stations, ply)
@@ -34,15 +32,11 @@ function NetClass:SendPlayRequest(station, ent)
 
 	local isEnabling = isValid or false
 
-	-- print("[NetClass] - SendPlayRequest | isEnabling: ", isEnabling)
-
 	-- Request net message
 	net.Start("CRadio.RequestStatusChange")
 	net.WriteBool(isEnabling)
 
 	if isEnabling then
-		-- print("[NetClass] - ReceivePlayRequest | name: ", station:GetName())
-
 		net.WriteUInt(station:GetID(), 8)
 	end
 
@@ -78,16 +72,12 @@ function NetClass:ReceivePlayRequest(len, ply)
 		station = CRadio:GetStation(id)
 	end
 
-	-- print("[NetClass] - ReceivePlayRequest | stationName/station: ", stationName, station)
-
 	local ent = ply:GetVehicle()
 	local isCustomEnt = net.ReadBool()
 
 	if isCustomEnt then
 		ent = net.ReadEntity()
 	end
-
-	-- print("[NetClass] - ReceivePlayRequest | isCustomEnt/ent: ", isCustomEnt, ent)
 
 	-- Fuck off skid.
 	if isCustomEnt and !ent.CRadio then
@@ -118,6 +108,8 @@ function NetClass:ReceivePlayRequest(len, ply)
 	end
 end
 
+local pColor = Color(200, 0, 0)
+
 --- SERVER --> CLIENT
 --- Networks all playlists to client(s).
 function NetClass:NetworkAllPlaylists(stations, ply)
@@ -145,7 +137,7 @@ function NetClass:NetworkAllPlaylists(stations, ply)
 	if !anyValidPlaylists then
 		net.Abort()
 
-		print("[CRadio] | None of your stations have songs in their playlists!")
+		MsgC(color_white, "[", pColor, "CRadio", color_white, "] - None of your stations have songs in their playlists!")
 
 		return
 	end
@@ -182,14 +174,9 @@ function NetClass:ReceivePlaylist(len)
 
 		local firstSong = playlist[1]
 
-		-- print("firstSong | StartTime: ", songEndTime - firstSong:GetLength())
-		-- print("firstSong | EndTime: ", songEndTime)
-
 		if firstSong then
 			firstSong:SetStartTime(songEndTime - firstSong:GetLength())
 		end
-
-		-- print("ReceivePlaylist | NextPlaylistRefresh: ", songEndTime)
 
 		station:SetNextPlaylistRefresh(songEndTime)
 

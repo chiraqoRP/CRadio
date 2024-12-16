@@ -47,8 +47,6 @@ if CLIENT then
             else
                 channel:Stop()
             end
-
-            -- print("ENTITY:StopRadioChannel | channel stopped!")
         end
 
         local preBufferChannel = self.acPreBuffer
@@ -127,8 +125,6 @@ if CLIENT then
             if !isValid then
                 KillBufferHook(identifier, self, parent)
 
-                -- print("ProcessChannel | Channel or parent entity invalid, buffering stopped!")
-
                 return
             end
 
@@ -140,8 +136,6 @@ if CLIENT then
                 self:SetTime(seekTime, true)
                 self:Play()
 
-                -- print("doFade: ", doFade)
-
                 if doFade then
                     self:DoFade(0.5, 0, defaultVol:GetFloat())
                 else
@@ -151,8 +145,6 @@ if CLIENT then
                 if isfunction(bufferCallback) then
                     bufferCallback(self, parent, station)
                 end
-
-                -- print("ProcessChannel | Buffering finished, time set to ", self:GetTime(), " supposed to be set to ", seekTime, "!")
 
                 -- We don't want to kill the channel, so we feed it nil/false where the channel arg is.
                 KillBufferHook(identifier, false, parent)
@@ -199,13 +191,9 @@ if CLIENT then
                 hook.Remove("Tick", identifier)
 
                 return
-
-                -- print("AUDIOCHANNEL:DoFade | Channel invalid, fade stopped!")
             end
 
             local newVolume = Lerp((curTime - startTime) / length, from, to)
-
-            -- print("AUDIOCHANNEL:DoFade | newVolume: ", newVolume)
 
             -- Hooks can sometimes execute after removal, so we check if the fading is already complete.
             if isValid and !didFade then
@@ -218,8 +206,6 @@ if CLIENT then
                 end
 
                 didFade = true
-
-                -- print("AUDIOCHANNEL:DoFade | Length higher, ", identifier, " removed!")
 
                 fadingChannels[self] = nil
 
