@@ -1,3 +1,5 @@
+-- Station lua must be placed in this folder path: */lua/cradio/shared/stations
+
 ---------------------------------
 -- Station
 ---------------------------------
@@ -7,8 +9,14 @@ local station = CRadio:Station("My Station", {
     Icon = "cradio/stations/my_station.png",
 
     -- True or false boolean that controls whether the station's playlist will be randomized on (re)creation.
+    -- Defaults to true.
     Randomize = false
 })
+
+-- The following sound types are supported:
+    -- .ogg (Best choice, ~q6 recommended)
+    -- .mp3 (Good alternative, v2 bitrate recommended)
+    -- .flac (Not recommended, way too large)
 
 ---------------------------------
 -- Songs
@@ -32,6 +40,7 @@ local coolSong = CRadio:Song("Cool Song 1", {
 
     -- Controls the chance of the song remaining in the playlist once a new one is created.
     -- Ranges from 0.0 --> 1.0.
+    -- Defaults to 1.0.
     Chance = 0.33,
 
     -- String pointing to an audio file in the clients base game folder (garrysmod/).
@@ -43,7 +52,7 @@ local coolSong = CRadio:Song("Cool Song 1", {
     -- An error will also be thrown if the URL is inaccessible.
     URL = "https://coolfile.host/cool_song_1.mp3",
 
-    -- Completely optional, only used for 'now playing' notifications.
+    -- Optional, only used for 'now playing' notifications.
     -- A fallback cover will draw if a valid path relative to (garrysmod/materials/) is not present.
     Cover = "cradio/covers/cool_release_1.png",
 
@@ -72,8 +81,10 @@ local coolMix = CRadio:SubPlaylist("Cool Mix", {
 
     -- Controls the chance of this sub-playlist remaining in it's stations playlist once a new one is created.
     -- Ranges from 0.0 --> 1.0.
+    -- Defaults to 1.0.
     Chance = 0.33,
 
     -- True or false boolean that controls whether the sub-playlist's songs will be shuffled on playlist insertion.
+    -- Defaults to false.
     Randomize = false
 })
