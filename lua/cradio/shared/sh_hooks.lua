@@ -339,25 +339,17 @@ else
         radioChannel:DoFade(0.5, oldVol, volume)
     end)
 
-    hook.Add("PlayerButtonUp", "CRadio.GUI.Release", function(ply, button)
-        if !(button == KEY_SLASH and IsFirstTimePredicted()) then
-            return
-        end
-
-        local cGUI = CRadio:GetGUI()
-
-        cGUI:Close()
-    end)
-
-    hook.Add("PlayerButtonDown", "CRadio.GUI.Press", function(ply, button)
-        if !(button == KEY_SLASH and IsFirstTimePredicted()) then
-            return
-        end
-
+	concommand.Add("+cradio_gui", function(ply, cmd, args, argsStr)
         local cGUI = CRadio:GetGUI()
 
         cGUI:Open()
-    end)
+	end)
+
+	concommand.Add("-cradio_gui", function(ply, cmd, args, argsStr)
+        local cGUI = CRadio:GetGUI()
+
+        cGUI:Close()
+	end)
 
     local overrideMenu = GetConVar("cl_cradio_gui_spawnmenu")
 
