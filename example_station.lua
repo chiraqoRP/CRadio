@@ -18,6 +18,12 @@ local station = CRadio:Station("My Station", {
     -- .mp3 (Good alternative, v2 bitrate recommended)
     -- .flac (Not recommended, way too large)
 
+-- All audio files should have ReplayGain applied to them.
+-- foobar2000 is the best for this.
+-- For linux users, ffmpeg also works with this:
+    -- ffmpeg -i in.flac -b:a 128k -af volume=replaygain=track out.mp3
+    -- ffmpeg -i in.flac -c libvorbis -q 7 -af volume=replaygain=track out.ogg
+
 ---------------------------------
 -- Songs
 ---------------------------------
