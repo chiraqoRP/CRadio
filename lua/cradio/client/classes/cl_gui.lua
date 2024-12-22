@@ -746,7 +746,7 @@ function GUIClass:DoPlayNotification(song, radioChannel, ent)
 
             -- For non-square covers, we calculate the ratio between width and height.
             local widthRatio = coverMat:Width() / coverMat:Height()
-            local drawWidth = 128 * widthRatio
+            local drawWidth = (128 * widthRatio) * scaleMul
 
             -- Height is enforced, but we scale our width based on the width-to-height ratio.
             surface.DrawTexturedRect(6 * scaleMul, 8 * scaleMul, drawWidth, drawHeight)
