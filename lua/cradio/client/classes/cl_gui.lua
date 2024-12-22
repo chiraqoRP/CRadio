@@ -657,9 +657,9 @@ end
 
 local shouldNotification = GetConVar("cl_cradio_notification")
 
--- We only scale down the notification panel and fonts if our width is below 2560.
-local screenWidth = ScrW()
-local scaleMul = screenWidth / 2560 or 1.0
+-- We only scale down the notification panel and fonts if our height is below 1440.
+local screenHeight = ScrH()
+local scaleMul = screenHeight / 1440 or 1.0
 
 -- recordMat is the fallback used when a song doesn't have a valid cover.
 local recordMat = Material("cradio/gui/notification_record.png", "smooth mips")
