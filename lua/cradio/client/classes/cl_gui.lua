@@ -889,14 +889,14 @@ end)
 surface.CreateFont("CRadio.Main", {
     font = "Tahoma",
     size = 16 * scaleMul,
-    weight = 500 * scaleMul,
+    weight = 500,
     extended = true
 })
 
 surface.CreateFont("CRadio.MainBold", {
     font = "Tahoma",
     size = 18 * scaleMul,
-    weight = 800 * scaleMul,
+    weight = 800,
     extended = true
 })
 
