@@ -18,7 +18,7 @@ if SERVER then
         -- Get the real vehicle entity in case we're using a custom base.
         veh = CLib.GetVehicle(veh)
 
-        if simfphys and simfphys.IsCar(veh) then
+        if !IsValid(veh) or veh.LVS or veh.IsGlideVehicle or veh.IsSimfphyscar then
             return
         end
 
@@ -41,7 +41,7 @@ if SERVER then
         -- Get the real vehicle entity in case we're using a custom base.
         veh = CLib.GetVehicle(veh)
 
-        if !IsValid(veh) or (simfphys and simfphys.IsCar(veh)) then
+        if !IsValid(veh) or veh.LVS or veh.IsGlideVehicle or veh.IsSimfphyscar then
             return
         end
 
@@ -66,20 +66,36 @@ if SERVER then
         veh:SetRadioOn(active)
     end)
 
-    -- HACK: We cannot avoid this, even modifying the baseclass doesn't work because of inheritance hell.
-    hook.Add("OnEntityCreated", "CRadio.LVSNotify", function(ent)
+    -- HACK: We cannot avoid this, even modifying base classes doesn't work because of inheritance hell.
+    hook.Add("OnEntityCreated", "CRadio.CustomEngineNotify", function(ent)
         timer.Simple(0, function()
-            if !IsValid(ent) or !ent.LVS then
+            if !IsValid(ent) or !(ent.LVS or ent.IsGlideVehicle) then
                 return
             end
 
-            ent:NetworkVarNotify("EngineActive", function(lvEnt, name, old, new)
-                if old == new then
-                    return
-                end
+            if ent.IsGlideVehicle then
+                ent:NetworkVarNotify("EngineState", function(gEnt, name, old, new)
+                    if old == new then
+                        return
+                    end
 
-                lvEnt:SetRadioOn(new)
-            end)
+                    local isAircraft = gEnt.VehicleType == Glide.VEHICLE_TYPE.HELICOPTER
+
+                    if (isAircraft and new == 1) or new == 2 then
+                        gEnt:SetRadioOn(true)
+                    else
+                        gEnt:SetRadioOn(false)
+                    end
+                end)
+            elseif ent.LVS then
+                ent:NetworkVarNotify("EngineActive", function(lvEnt, name, old, new)
+                    if old == new then
+                        return
+                    end
+
+                    lvEnt:SetRadioOn(new)
+                end)
+            end
         end)
     end)
 else
