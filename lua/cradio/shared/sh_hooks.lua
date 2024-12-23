@@ -18,7 +18,9 @@ if SERVER then
         -- Get the real vehicle entity in case we're using a custom base.
         veh = CLib.GetVehicle(veh)
 
-        if !IsValid(veh) or veh.LVS or veh.IsGlideVehicle or veh.IsSimfphyscar then
+        -- WORKAROUND: We ignore Sit Anywhere seats as they cause lua errors, probably because of race conditions.
+        -- REFERENCE: https://github.com/Xerasin/Sit-Anywhere/blob/master/sit/lua/sitanywhere/server/sit.lua#L76
+        if !IsValid(veh) or veh.LVS or veh.IsGlideVehicle or veh.IsSimfphyscar or veh.playerdynseat then
             return
         end
 
@@ -41,7 +43,9 @@ if SERVER then
         -- Get the real vehicle entity in case we're using a custom base.
         veh = CLib.GetVehicle(veh)
 
-        if !IsValid(veh) or veh.LVS or veh.IsGlideVehicle or veh.IsSimfphyscar then
+        -- WORKAROUND: We ignore Sit Anywhere seats as they cause lua errors, probably because of race conditions.
+        -- REFERENCE: https://github.com/Xerasin/Sit-Anywhere/blob/master/sit/lua/sitanywhere/server/sit.lua#L76
+        if !IsValid(veh) or veh.LVS or veh.IsGlideVehicle or veh.IsSimfphyscar or veh.playerdynseat then
             return
         end
 
