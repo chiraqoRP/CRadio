@@ -80,6 +80,10 @@ if SERVER then
         veh:SetRadioOn(active)
     end)
 
+    hook.Add("LVS.OnVehicleDestroyed", "CRadio.DisableRadio", function(veh, attacker, inflictor)
+        veh:SetRadioOn(false)
+    end)
+
     -- HACK: We cannot avoid this, even modifying base classes doesn't work because of inheritance hell.
     hook.Add("OnEntityCreated", "CRadio.CustomEngineNotify", function(ent)
         timer.Simple(0, function()
@@ -228,11 +232,6 @@ else
     end
 
     local function RadioStateVarChanged(ent, name, old, new)
-        -- If we're not in the vehicle, don't play/stop any audio channel.
-        if ent != CLib.GetVehicle() then
-            return
-        end
-
         local currentStation = ent:GetCurrentStation()
 
         if new and !currentStation then
@@ -242,6 +241,13 @@ else
         if !new then
             ent:StopRadioChannel(true, 0.25)
         else
+            local isOurVehicle = ent == CLib.GetVehicle()
+
+            -- If we're not in the vehicle, don't play any audio channel.
+            if !isOurVehicle then
+                return
+            end
+
             currentStation:RadioChannel(ent, false, true, true)
         end
     end
