@@ -260,8 +260,21 @@ else
         end
     end)
 
+    local seatClass = "prop_vehicle_prisoner_pod"
+
     hook.Add("EntityRemoved", "CRadio.ClearSounds", function(ent, fullUpdate)
-        if fullUpdate or !(ent:IsVehicle() or ent.IsGlideVehicle or ent.LVS) then
+        if fullUpdate then
+            return
+        end
+
+        local isVehicle = ent:IsVehicle()
+
+        if !isVehicle and !ent.IsGlideVehicle and !ent.LVS then
+            return
+        end
+
+        -- Check if we're a seat for custom vehicle.
+        if isVehicle and ent:GetClass() == seatClass then
             return
         end
 
