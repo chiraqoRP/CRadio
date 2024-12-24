@@ -261,7 +261,7 @@ else
     end)
 
     hook.Add("EntityRemoved", "CRadio.ClearSounds", function(ent, fullUpdate)
-        if fullUpdate or !(ent:IsVehicle() or ent.LVS) then
+        if fullUpdate or !(ent:IsVehicle() or ent.IsGlideVehicle or ent.LVS) then
             return
         end
 
