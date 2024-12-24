@@ -15,12 +15,17 @@ if SERVER then
     end)
 
     hook.Add("PlayerEnteredVehicle", "CRadio.ControlRadio", function(ply, veh, role)
+        -- WORKAROUND: We ignore Sit Anywhere seats as they cause lua errors, probably because of race conditions.
+        -- REFERENCE: https://github.com/Xerasin/Sit-Anywhere/blob/master/sit/lua/sitanywhere/server/sit.lua#L76
+        if veh.playerdynseat then
+            return
+        end
+
         -- Get the real vehicle entity in case we're using a custom base.
         veh = CLib.GetVehicle(veh)
 
-        -- WORKAROUND: We ignore Sit Anywhere seats as they cause lua errors, probably because of race conditions.
-        -- REFERENCE: https://github.com/Xerasin/Sit-Anywhere/blob/master/sit/lua/sitanywhere/server/sit.lua#L76
-        if !IsValid(veh) or veh.LVS or veh.IsGlideVehicle or veh.IsSimfphyscar or veh.playerdynseat then
+        -- We handle RadioOn logic for custom bases elsewhere.
+        if !IsValid(veh) or veh.LVS or veh.IsGlideVehicle or veh.IsSimfphyscar then
             return
         end
 
@@ -40,12 +45,17 @@ if SERVER then
     end)
 
     hook.Add("PlayerLeaveVehicle", "CRadio.ControlRadio", function(ply, veh)
+        -- WORKAROUND: We ignore Sit Anywhere seats as they cause lua errors, probably because of race conditions.
+        -- REFERENCE: https://github.com/Xerasin/Sit-Anywhere/blob/master/sit/lua/sitanywhere/server/sit.lua#L76
+        if veh.playerdynseat then
+            return
+        end
+
         -- Get the real vehicle entity in case we're using a custom base.
         veh = CLib.GetVehicle(veh)
 
-        -- WORKAROUND: We ignore Sit Anywhere seats as they cause lua errors, probably because of race conditions.
-        -- REFERENCE: https://github.com/Xerasin/Sit-Anywhere/blob/master/sit/lua/sitanywhere/server/sit.lua#L76
-        if !IsValid(veh) or veh.LVS or veh.IsGlideVehicle or veh.IsSimfphyscar or veh.playerdynseat then
+        -- We handle RadioOn logic for custom bases elsewhere.
+        if !IsValid(veh) or veh.LVS or veh.IsGlideVehicle or veh.IsSimfphyscar then
             return
         end
 
