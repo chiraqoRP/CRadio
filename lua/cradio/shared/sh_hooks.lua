@@ -270,7 +270,7 @@ else
     local seatClass = "prop_vehicle_prisoner_pod"
 
     hook.Add("EntityRemoved", "CRadio.ClearSounds", function(ent, fullUpdate)
-        if fullUpdate then
+        if fullUpdate or !IsValid(ent) then
             return
         end
 
