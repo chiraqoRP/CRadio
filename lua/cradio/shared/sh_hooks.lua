@@ -97,9 +97,10 @@ if SERVER then
                         return
                     end
 
-                    local isAircraft = gEnt.VehicleType == Glide.VEHICLE_TYPE.HELICOPTER
+                    local gType = gEnt.VehicleType
+                    local isAircraft = gType == Glide.VEHICLE_TYPE.HELICOPTER or gType == Glide.VEHICLE_TYPE.PLANE
 
-                    if (isAircraft and new == 1) or new == 2 then
+                    if (isAircraft and new >= 1) or new == 2 then
                         gEnt:SetRadioOn(true)
                     else
                         gEnt:SetRadioOn(false)
