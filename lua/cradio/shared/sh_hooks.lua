@@ -276,7 +276,7 @@ else
 
         local isVehicle = ent:IsVehicle()
 
-        if !isVehicle and !ent.IsGlideVehicle and !ent.LVS then
+        if !isVehicle and !ent.LVS then
             return
         end
 
