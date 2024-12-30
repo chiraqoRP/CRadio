@@ -18,11 +18,17 @@ local station = CRadio:Station("My Station", {
     -- .mp3 (Good alternative, v2 bitrate recommended)
     -- .flac (Not recommended, way too large)
 
--- All audio files should have ReplayGain applied to them.
--- foobar2000 is the best for this.
--- For linux users, ffmpeg also works with this:
-    -- ffmpeg -i in.flac -codec:a libvorbis -qscale:a 6 -af volume=replaygain=track out.ogg
-    -- ffmpeg -i in.flac -b:a 128k -af volume=replaygain=track out.mp3
+-- All songs should have ReplayGain (RG) permanently applied to their audio, as gmod does not support RG in-game.
+-- For windows users, foobar2000 is the best for this.
+-- For mac users, I recommend installing any other operating system.
+-- For linux users, there are additional considerations.
+    -- For .ogg files, ffmpeg's libvorbis encoder outputs broken metadata containers that many programs fail to read.
+    -- Thus, those stuck trying to convert to .ogg on linux should try using foobar2000 via wine, or get friends to convert songs for them.
+        -- Make sure to enable vcruntime140 and set mode to win7 for fb2k on wine.
+
+    -- For .mp3 and .flac files, ffmpeg fortunately works well with these commands:
+        -- ffmpeg -i in.flac -b:a 128k -af volume=replaygain=track out.mp3
+        -- ffmpeg -i in.flac -c:a flac -compression_level 5 -af volume=replaygain=track out.flac
 
 ---------------------------------
 -- Songs
