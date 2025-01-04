@@ -134,6 +134,12 @@ if CLIENT then
             -- If our audio has buffered enough, we can seek to the desired time.
             if bufferedTime >= seekTime then
                 self:SetTime(seekTime, true)
+
+                -- WORKAROUND: Some streams don't support seeking with dont_decode set to true, this serves as a sanity check for that.
+                if self:GetTime() == 0 then
+                    self:SetTime(seekTime, false)
+                end
+
                 self:Play()
 
                 if doFade then
