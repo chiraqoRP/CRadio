@@ -3,6 +3,8 @@ AddCSLuaFile("cradio/shared/sh_convars.lua")
 
 if SERVER then
     AddCSLuaFile("cradio/client/classes/cl_gui.lua")
+    AddCSLuaFile("cradio/client/classes/cl_stream.lua")
+    AddCSLuaFile("cradio/client/cl_meta.lua")
 end
 
 AddCSLuaFile("cradio/shared/classes/sh_net.lua")
@@ -18,6 +20,8 @@ include("cradio/shared/sh_convars.lua")
 
 if CLIENT then
     include("cradio/client/classes/cl_gui.lua")
+    include("cradio/client/classes/cl_stream.lua")
+    include("cradio/client/cl_meta.lua")
 end
 
 include("cradio/shared/classes/sh_net.lua")

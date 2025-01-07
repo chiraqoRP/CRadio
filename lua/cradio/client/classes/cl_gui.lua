@@ -159,24 +159,24 @@ function GUIClass:BuildFrame()
 
     function motherFrame:BlurBackground(dark)
         self.BlurDynamic = self.BlurDynamic or 0
-    
+
         local layers, density = 1, 1
         local x, y = self:LocalToScreen(0, 0)
         local frameTime, Num = 1 / RealFrameTime(), 5
-    
+
         surface.SetDrawColor(255, 255, 255, 100)
         surface.SetMaterial(blurMat)
-    
+
         for i = 1, Num do
             blurMat:SetFloat("$blur", (i / layers) * density * self.BlurDynamic)
             blurMat:Recompute()
             render.UpdateScreenEffectTexture()
             surface.DrawTexturedRect(-x, -y, ScrW(), ScrH())
         end
-    
+
         surface.SetDrawColor(0, 0, 0, (dark or 150) * self.BlurDynamic)
         surface.DrawRect(0, 0, self:GetSize())
-    
+
         self.BlurDynamic = math.Clamp(self.BlurDynamic + (1 / frameTime) * 7, 0, 1)
     end
 
@@ -429,7 +429,7 @@ local function CalcOutlineCircle(x, y, radius, thickness, color, mat)
 
     -- HACK: https://github.com/SneakySquid/Circles/blob/master/circles.lua#L244
     -- Setting this to false seems to not affect visuals at all and MASSIVELY reduces the cost of drawing.
-    -- Doing this brings the drawing in PANEL:Paint from 10k calls averaging ~0.010ms per call to not even hitting the top 10 in FProfiler.
+    -- Doing this brings the call count in PANEL:Paint from 10k function calls averaging ~0.010ms per call to not even breaking into the top 10 in FProfiler.
     outlineCircle:SetChildCircle(false)
 
     return outlineCircle
@@ -476,7 +476,7 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
         -- If no valid string is provided, the var is the default material.
         self.Icon = isstring(iconPath) and Material(iconPath, "smooth mips") or iconPath
 
-        -- If the station has no name (aka isOffButton == true), then we use the number of generated panels for the timer.
+        -- If the station has no name (ie: isOffButton == true), then we use the number of generated panels for the timer.
         local stationName = station and station:GetName() or tostring(panelsGenerated)
 
         self.TimerName = string.format(timerFormat, stationName)
@@ -489,23 +489,23 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
 
     function stationPanel:CalculateFade(speed, customHover)
         local hovered = self:IsHovered()
-    
+
         -- This is a bool that can be provided for panels that have a custom hover method.
         if customHover != nil then
             hovered = customHover
         end
-    
+
         local buf, step = self.__hoverBuf or 0, RealFrameTime() * speed
-    
+
         if hovered and buf < 1 then
             buf = math.min(1, step + buf)
         elseif !hovered and buf > 0 then
             buf = math.max(0, buf - step)
         end
-    
+
         self.__hoverBuf = buf
         buf = math.EaseInOut(buf, 0.2, 0.2)
-    
+
         return buf
     end
 
@@ -667,17 +667,17 @@ local backgroundColor = Color(40, 40, 40, 150)
 local bufferTextColor = Color(255, 255, 255, 0)
 local bufferFormat = "%.2f%%"
 
-function GUIClass:DoPlayNotification(song, radioChannel, ent)
-    if !shouldNotification:GetBool() then
+function GUIClass:DoPlayNotification(song, channel, ent)
+    if !shouldNotification:GetBool() or !IsValid(channel) then
         return
     end
 
-    -- COMMENT:
+    -- Songs can deny notifications showing, common for continous mixes.
     if !song or !song:IsValid() or !song:ShouldNotify() then
         return
     end
 
-    -- COMMENT:
+    -- We don't want notifications that originate from custom entities or others vehicles showing up.
     if IsValid(ent) and (ent.CRadio or ent != CLib.GetVehicle()) then
         return
     end
@@ -696,7 +696,7 @@ function GUIClass:DoPlayNotification(song, radioChannel, ent)
             pFrame:Remove()
 
             -- Play the queued notification once the old notification is removed.
-            self:DoPlayNotification(song, radioChannel)
+            self:DoPlayNotification(song, channel)
         end)
 
         self.NotificationPanel = nil
@@ -834,7 +834,7 @@ function GUIClass:DoPlayNotification(song, radioChannel, ent)
             return
         end
 
-        local channelDead = !radioChannel or !radioChannel:IsValid()
+        local channelDead = !channel or !channel:IsValid()
 
         -- If our channel is removed, start the kill timer.
         if channelDead then
@@ -844,12 +844,12 @@ function GUIClass:DoPlayNotification(song, radioChannel, ent)
         end
 
         local sysTime = SysTime()
-        local bufferedTime, seekTime = radioChannel:GetBufferedTime(), song:GetCurTime()
+        local bufferedTime, seekTime = channel:GetBufferedTime(), song:GetCurTime()
         local bufferProgress = math.Clamp(bufferedTime / seekTime, 0, 1)
 
         self.StartTime = self.StartTime or sysTime
 
-        local isPlaying = radioChannel:GetState() == GMOD_CHANNEL_PLAYING
+        local isPlaying = channel:GetState() == GMOD_CHANNEL_PLAYING
 
         -- If the channel is buffering, progress is below 98.00%, and 0.5s have passed we draw buffering progress.
         if (sysTime - self.StartTime) >= 0.5 and !isPlaying and bufferProgress < 0.98 then

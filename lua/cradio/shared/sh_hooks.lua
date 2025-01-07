@@ -128,9 +128,9 @@ else
         plyTable.m_LastVehicleEnter = enterTime
 
         local switchedSeats = enterTime < (plyTable.m_LastVehicleExit or 0) + 0.5
-        local radioChannel = veh:GetRadioChannel()
+        local stream = veh:GetRadioStream()
 
-        if !switchedSeats and !(radioChannel and radioChannel:IsValid()) and veh:GetRadioOn() then
+        if !switchedSeats and !stream and veh:GetRadioOn() then
             local currentStation = veh:GetCurrentStation()
 
             -- The radio is set to off.
@@ -138,7 +138,11 @@ else
                 return
             end
 
-            currentStation:RadioChannel(veh, false, true)
+            local nStream = currentStation:Stream(veh)
+
+            if nStream:IsValid() then
+                nStream:Play(true)
+            end
         end
     end
 
@@ -164,7 +168,7 @@ else
             local switchedSeats = inVehicle and CurTime() < exitTime + 0.5
 
             if !inVehicle or !switchedSeats then
-                veh:StopRadioChannel(true)
+                veh:StopRadioStream(true)
             end
         end)
     end
@@ -180,7 +184,7 @@ else
 
         if vClient == NULL then
             vClient = nil
-    
+
             return
         end
 
@@ -204,32 +208,41 @@ else
     end)
 
     local function StationVarChanged(ent, name, old, new)
-        -- If we're not in the vehicle or our radio is off, don't play/stop any radio channel.
+        -- If we're not in the vehicle or our radio is off, don't play/stop any radio stream.
         if ent != CLib.GetVehicle() or !ent:GetRadioOn() then
             return
         end
 
         local station = CRadio:GetStation(new)
-        local oldRadioChannel = ent:GetRadioChannel()
+        local oldStream = ent:GetRadioStream()
 
-        -- If we have a valid audio channel active and it's station is the same as the new one, stop.
-        if oldRadioChannel and oldRadioChannel:GetStation() == station then
+        -- If we have a valid stream active and it's station is the same as the new one, stop.
+        if oldStream and oldStream:GetStation() == station then
             return
         end
 
         -- Stop the vehicle's existing audio channel if present.
-        ent:StopRadioChannel(true)
+        ent:StopRadioStream(true)
 
-        if !station then
+        if !IsValid(station) then
             return
         end
 
         local curSong = station:GetCurrentSong()
-        local cGUI = CRadio:GetGUI()
+        local stream = station:Stream(ent, true, function(cStream, channel, sEnt)
+            -- We only want this to run on the first channel's initialization.
+            if cStream.DidUpdate or channel == cStream:GetPreBufferChannel() then
+                return
+            end
 
-        station:RadioChannel(ent, false, true, true, function(nEnt, channel)
-            cGUI:DoPlayNotification(curSong, channel, nEnt)
+            local cGUI = CRadio:GetGUI()
+
+            cGUI:DoPlayNotification(curSong, channel, sEnt)
         end)
+
+        if stream:IsValid() then
+            stream:Play(true)
+        end
     end
 
     local function RadioStateVarChanged(ent, name, old, new)
@@ -240,16 +253,20 @@ else
         end
 
         if !new then
-            ent:StopRadioChannel(true, 0.25)
+            ent:StopRadioStream(true, 0.25)
         else
             local isOurVehicle = ent == CLib.GetVehicle()
 
-            -- If we're not in the vehicle, don't play any audio channel.
+            -- If we're not in the vehicle, don't start a stream.
             if !isOurVehicle then
                 return
             end
 
-            currentStation:RadioChannel(ent, false, true, true)
+            local stream = currentStation:Stream(ent, true)
+
+            if stream:IsValid() then
+                stream:Play(true)
+            end
         end
     end
 
@@ -297,7 +314,7 @@ else
             staticSnd:Stop()
         end
 
-        veh:StopRadioChannel()
+        veh:StopRadioStream(true, 0.5)
 
         local ourVehicle = CLib.GetVehicle()
 
@@ -310,7 +327,7 @@ else
     end)
 
     local loopback = GetConVar("voice_loopback")
-    local shouldLower = GetConVar("cl_cradio_lower_on_speak")
+    local shouldLower = GetConVar("cl_cradio_volume_lower_on_speak")
     local playersSpeaking = 0
 
     hook.Add("PlayerStartVoice", "CRadio.LowerVolume", function(ply)
@@ -332,20 +349,26 @@ else
             return
         end
 
-        local radioChannel = vehicle:GetRadioChannel()
+        local stream = vehicle:GetRadioStream()
 
-        if !radioChannel or !radioChannel:IsValid() or radioChannel:IsFading() then
+        if !stream or !stream:IsValid() then
             return
         end
 
-        local volume = radioChannel:GetVolume()
+        local channel = stream:GetChannel()
+
+        if !channel or !channel:IsValid() or channel:IsFading() then
+            return
+        end
+
+        local volume = channel:GetVolume()
         local newVol = math.min(volume * 0.75, 0.1)
 
         if volume == newVol then
             return
         end
 
-        radioChannel:DoFade(0.5, volume, newVol)
+        channel:FadeTo(newVol, 0.5)
     end)
 
     local defaultVol = GetConVar("cl_cradio_volume")
@@ -369,33 +392,47 @@ else
             return
         end
 
-        local radioChannel = vehicle:GetRadioChannel()
+        local stream = vehicle:GetRadioStream()
 
-        if !radioChannel or !radioChannel:IsValid() then
+        if !stream or !stream:IsValid() then
             return
         end
 
-        local oldVol = radioChannel:GetVolume()
+        local channel = stream:GetChannel()
+
+        if !channel or !channel:IsValid() or channel:IsFading() then
+            return
+        end
+
+        local oldVol = channel:GetVolume()
         local volume = defaultVol:GetFloat()
 
         if oldVol == volume then
             return
         end
 
-        radioChannel:DoFade(0.5, oldVol, volume)
+        channel:FadeTo(1, 0.5, false, function(fChannel)
+            if !IsValid(stream) or !stream:IsValid() then
+                return 1
+            end
+
+            local vol, _ = stream:CalculateVolume()
+
+            return vol
+        end)
     end)
 
-	concommand.Add("+cradio_gui", function(ply, cmd, args, argsStr)
+    concommand.Add("+cradio_gui", function(ply, cmd, args, argsStr)
         local cGUI = CRadio:GetGUI()
 
         cGUI:Open()
-	end)
+    end)
 
-	concommand.Add("-cradio_gui", function(ply, cmd, args, argsStr)
+    concommand.Add("-cradio_gui", function(ply, cmd, args, argsStr)
         local cGUI = CRadio:GetGUI()
 
         cGUI:Close()
-	end)
+    end)
 
     local overrideMenu = GetConVar("cl_cradio_gui_spawnmenu")
 

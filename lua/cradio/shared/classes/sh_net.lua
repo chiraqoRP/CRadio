@@ -137,7 +137,7 @@ function NetClass:NetworkAllPlaylists(stations, ply)
 	if !anyValidPlaylists then
 		net.Abort()
 
-		MsgC(color_white, "[", pColor, "CRadio", color_white, "] - None of your stations have songs in their playlists!")
+		CRadio:DebugPrint("None of your stations have songs in their playlists!")
 
 		return
 	end
@@ -182,7 +182,7 @@ function NetClass:ReceivePlaylist(len)
 
 		-- Calling this on CLIENT in a timer will result in nothing happening (because the playlist is empty!) and the station just doing nothing.
 		-- This fixes that, albeit by introducing some unavoidable delay to the song transition.
-		station:UpdateRadioChannels()
+		station:UpdateStreams()
 	end
 end
 
