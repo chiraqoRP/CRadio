@@ -162,6 +162,16 @@ function CoreClass:PrintInfo()
 	end
 end
 
+local developer = GetConVar("developer")
+
+function CoreClass:DebugPrint(...)
+	if developer:GetInt() == 0 then
+		return
+	end
+
+	MsgC(Color(200, 0, 0), "[CRadio]", color_white, " - ", ..., "\n")
+end
+
 CoreClass:__constructor()
 
 CRadio = CoreClass
