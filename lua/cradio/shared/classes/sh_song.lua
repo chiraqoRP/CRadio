@@ -81,7 +81,6 @@ function SongClass:Remove()
 		self.Parent:RemoveSong(self)
 	end
 
-	-- TODO: Does this even do what I think it does?
 	setmetatable(self, nil)
 end
 

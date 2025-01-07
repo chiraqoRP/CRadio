@@ -60,7 +60,6 @@ function SubPlaylistClass:Remove()
 		self.Parent:RemoveSubPlaylist(self)
 	end
 
-	-- TODO: Does this even do what I think it does?
 	setmetatable(self, nil)
 end
 
