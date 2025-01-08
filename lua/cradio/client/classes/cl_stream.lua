@@ -272,6 +272,7 @@ function StreamClass:Update()
         self:QueuePreBuffer()
 
         cGUI:DoPlayNotification(nextSong, preBufferChannel, self:GetEntity())
+        CRadio:DebugPrint(string.format(playPreFormat, tostring(preBufferChannel), tostring(self)))
 
         return
     end
@@ -421,6 +422,7 @@ function StreamClass:IsPreBuffered()
     return timer.Exists(timerName)
 end
 
+local enabled = GetConVar("cl_cradio")
 local shouldPreBuffer = GetConVar("cl_cradio_prebuffer")
 
 function StreamClass:QueuePreBuffer()
