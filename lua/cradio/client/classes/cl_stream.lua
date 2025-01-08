@@ -20,10 +20,6 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
--- TODO:
-    -- make static last at least 1.0 seconds (final test)
-    -- self.IsDestroyed, does it even work?
-
 local StreamClass = {}
 StreamClass.__index = StreamClass
 
