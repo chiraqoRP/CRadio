@@ -483,6 +483,11 @@ function StreamClass:CalculateVolume(eyeRight)
 
     -- We pan and adjust volume to make the sound have a fake position in the world, but only when 3D is enabled.
     if !IsValid(ent) or !self:Get3DEnabled() then
+        -- If any players are audibly speaking, we lower the channels volume.
+        if self:GetPlayersSpeaking() then
+            return math.max(oVol * 0.5, 0.1), 0
+        end
+
         return oVol, 0
     end
 
@@ -505,6 +510,30 @@ function StreamClass:CalculateVolume(eyeRight)
     pan = eyeRight:Dot(dir)
 
     return oVol * vol, pan
+end
+
+function StreamClass:GetPlayersSpeaking()
+    return self.bPlayersSpeaking
+end
+
+-- If any players are audibly speaking, we can use this to smoothly lower the channels volume.
+function StreamClass:SetPlayersSpeaking(bSpeaking)
+    self.bPlayersSpeaking = bSpeaking
+
+    local channel = self:GetChannel()
+
+    if !channel or !channel:IsValid() or self:Get3DEnabled() then
+        return
+    end
+
+    local oVol = defaultVol:GetFloat()
+
+    if bSpeaking then
+        local newVol = math.max(oVol * 0.5, 0.1)
+        channel:FadeTo(newVol, 0.5)
+    else
+        channel:FadeIn(0.5, newVol)
+    end
 end
 
 function StreamClass:GetStaticSound()

@@ -355,24 +355,9 @@ else
             return
         end
 
-        local channel = stream:GetChannel()
-
-        if !channel or !channel:IsValid() or channel:IsFading() then
-            return
-        end
-
-        local volume = channel:GetVolume()
-        local newVol = math.min(volume * 0.75, 0.1)
-
-        if volume == newVol then
-            return
-        end
-
-        channel:FadeTo(newVol, 0.5)
+        stream:SetPlayersSpeaking(true)
     end)
-
-    local defaultVol = GetConVar("cl_cradio_volume")
-
+    
     hook.Add("PlayerEndVoice", "CRadio.ResetVolume", function(ply)
         local client = LocalPlayer()
 
@@ -380,7 +365,7 @@ else
             return
         end
 
-        playersSpeaking = playersSpeaking - 1
+        playersSpeaking = math.max(0, playersSpeaking - 1)
 
         if playersSpeaking != 0 or !shouldLower:GetBool() then
             return
@@ -398,28 +383,7 @@ else
             return
         end
 
-        local channel = stream:GetChannel()
-
-        if !channel or !channel:IsValid() or channel:IsFading() then
-            return
-        end
-
-        local oldVol = channel:GetVolume()
-        local volume = defaultVol:GetFloat()
-
-        if oldVol == volume then
-            return
-        end
-
-        channel:FadeTo(1, 0.5, false, function(fChannel)
-            if !IsValid(stream) or !stream:IsValid() then
-                return 1
-            end
-
-            local vol, _ = stream:CalculateVolume()
-
-            return vol
-        end)
+        stream:SetPlayersSpeaking(false)
     end)
 
     concommand.Add("+cradio_gui", function(ply, cmd, args, argsStr)
