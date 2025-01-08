@@ -185,7 +185,7 @@ function AUDIOCHANNEL:StopFade()
     hook.Remove("Tick", identifier)
 end
 
-function AUDIOCHANNEL:FadeIn(length, callback)
+function AUDIOCHANNEL:FadeIn(length, start, callback)
     local stream = self:GetStream()
 
     if !IsValid(stream) or !stream:IsValid() then
@@ -193,7 +193,7 @@ function AUDIOCHANNEL:FadeIn(length, callback)
     end
 
     self:StopFade()
-    self:SetVolume(0)
+    self:SetVolume(start or 0)
     self:FadeTo(1, length, callback, function(fChannel)
         if !IsValid(stream) or !stream:IsValid() then
             return 1
