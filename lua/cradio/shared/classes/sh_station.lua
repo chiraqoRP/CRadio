@@ -452,6 +452,7 @@ function StationClass:UpdateTime(didRefresh)
 end
 
 local enabled = GetConVar("cl_cradio")
+local sCreateFormat = "Created %s for %s."
 
 function StationClass:Stream(ent, emitStatic, processCallback)
 	if SERVER or !IsValid(ent) or !enabled:GetBool() then
@@ -470,6 +471,8 @@ function StationClass:Stream(ent, emitStatic, processCallback)
 		return
 	end
 
+	CRadio:DebugPrint(string.format(sCreateFormat, tostring(stream), tostring(ent)))
+
 	local stream = CRadioStreamClass({
 		Entity = ent,
 		Station = self,
@@ -481,9 +484,13 @@ function StationClass:Stream(ent, emitStatic, processCallback)
 end
 
 function StationClass:UpdateStreams()
+	if SERVER then
+		return
+	end
+
 	local curSong = self.Playlist[1]
 
-	if SERVER or !curSong then
+	if !IsValid(curSong) or !curSong:IsValid() then
 		return
 	end
 
