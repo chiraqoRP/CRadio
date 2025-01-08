@@ -44,7 +44,7 @@ function StreamClass:__constructor(streamStruct)
         return
     end
 
-    local curSong = self:GetCurSong()
+    local curSong = self:GetCurrentSong()
 
     if !curSong or !curSong:IsValid() then
         return
@@ -97,7 +97,7 @@ function StreamClass:__tostring()
         return nullString
     end
 
-    return string.format(formatString, self:GetStation():GetName(), self:GetCurSong():GetName())
+    return string.format(formatString, self:GetStation():GetName(), self:GetCurrentSong():GetName())
 end
 
 function StreamClass:__eq(other)
@@ -166,7 +166,7 @@ function StreamClass:SetStation(station)
     self.Station = station
 end
 
-function StreamClass:GetCurSong()
+function StreamClass:GetCurrentSong()
     local station = self:GetStation()
 
     if !IsValid(station) then
@@ -265,7 +265,7 @@ function StreamClass:Update()
     self.DidUpdate = true
 
     local cGUI = CRadio:GetGUI()
-    local nextSong = self:GetCurSong()
+    local nextSong = self:GetCurrentSong()
     local preBufferChannel = self:GetPreBufferChannel()
 
     if IsValid(preBufferChannel) and preBufferChannel:IsValid() then
@@ -296,7 +296,7 @@ function StreamClass:SetChannel(channel)
 end
 
 function StreamClass:MakeChannel(song, callback)
-    song = song or self:GetCurSong()
+    song = song or self:GetCurrentSong()
 
     local playSong, path = song:GetPlayMethod()
 
@@ -319,12 +319,12 @@ end
 
 function StreamClass:ProcessChannel(channel, song)
     channel = channel or self:GetChannel()
-    song = song or self:GetCurSong()
+    song = song or self:GetCurrentSong()
 
     local entity = self:GetEntity()
 
     if !IsValid(channel) or !IsValid(entity) then
-        ErrorNoHalt(self, " - Channel or entity for ", tostring(self:GetCurSong()), " invalid after initialization. Ensure file/URL is accessible.")
+        ErrorNoHalt(self, " - Channel or entity for ", tostring(song), " invalid after initialization. Ensure file/URL is accessible.")
 
         self:Destroy()
 
@@ -351,7 +351,7 @@ function StreamClass:PlayChannel(channel)
 
     CRadio:DebugPrint(string.format(cPlayFormat, tostring(channel), tostring(self)))
 
-    local curSong = self:GetCurSong()
+    local curSong = self:GetCurrentSong()
     local shouldBuffer = channel:IsOnline() and !channel:IsBlockStreamed() or curSong:GetCurTime() > 0.5
     local shouldFade = !self.DidUpdate and self.ShouldFade
 
@@ -420,7 +420,7 @@ function StreamClass:QueuePreBuffer()
         return
     end
 
-    local curSong = self:GetCurSong()
+    local curSong = self:GetCurrentSong()
     local preBufferDelay = math.max(curSong:GetTimeLeft() - 3, 1)
     local timerName = string.format(preBufferFormat, self:GetID())
 
@@ -428,7 +428,7 @@ function StreamClass:QueuePreBuffer()
         local nextSong = self:GetNextSong()
 
         -- Song must not be nil and be valid (have both name and url).
-        if curSong != self:GetCurSong() or !IsValid(nextSong) or !nextSong:IsValid() then
+        if curSong != self:GetCurrentSong() or !IsValid(nextSong) or !nextSong:IsValid() then
             return
         end
 
