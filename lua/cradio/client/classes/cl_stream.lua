@@ -482,7 +482,7 @@ function StreamClass:CalculateVolume(eyeRight)
     local oVol = defaultVol:GetFloat()
 
     -- We pan and adjust volume to make the sound have a fake position in the world, but only when 3D is enabled.
-    if !IsValid(ent) or self:Get3DEnabled() then
+    if !IsValid(ent) or !self:Get3DEnabled() then
         return oVol, 0
     end
 
