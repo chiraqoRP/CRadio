@@ -32,6 +32,10 @@ function ENTITY:StopRadioStream(doFade, fadeLength)
 
     if doFade and IsValid(channel) then
         channel:FadeOut(fadeLength or 0.5, function(fChannel)
+            if !IsValid(stream) then
+                return
+            end
+
             stream:Destroy()
         end)
     else
@@ -102,7 +106,7 @@ function AUDIOCHANNEL:Buffer(parent, callback)
     local identifier = GetHookIdentifier(hookBufferFormat)
     local stream = self:GetStream()
 
-    if !IsValid(parent) or !IsValid(stream) or !stream:IsValid() then
+    if !IsValid(parent) or !IsValid(stream) then
         return
     end
 
@@ -123,7 +127,7 @@ function AUDIOCHANNEL:Buffer(parent, callback)
     end
 
     hook.Add("Tick", identifier, function()
-        local isValid = stream and self and self:IsValid() and IsValid(parent)
+        local isValid = stream and IsValid(self) and IsValid(parent)
 
         -- Detect if the audio channel was stopped.
         if !isValid then
@@ -188,14 +192,14 @@ end
 function AUDIOCHANNEL:FadeIn(length, start, callback)
     local stream = self:GetStream()
 
-    if !IsValid(stream) or !stream:IsValid() then
+    if !IsValid(stream) then
         return
     end
 
     self:StopFade()
     self:SetVolume(start or 0)
     self:FadeTo(1, length, callback, function(fChannel)
-        if !IsValid(stream) or !stream:IsValid() then
+        if !IsValid(stream) then
             return 1
         end
 
@@ -208,7 +212,7 @@ end
 function AUDIOCHANNEL:FadeOut(length, callback)
     local stream = self:GetStream()
 
-    if !IsValid(stream) or !stream:IsValid() then
+    if !IsValid(stream) then
         return
     end
 
@@ -229,7 +233,7 @@ function AUDIOCHANNEL:FadeTo(to, length, callback, volCallback)
 
     hook.Add("Tick", identifier, function()
         local curTime = SysTime()
-        local isValid = self and self:IsValid()
+        local isValid = IsValid(self)
 
         -- Detect if the audio channel was stopped.
         if !isValid then

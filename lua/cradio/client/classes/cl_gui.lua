@@ -615,7 +615,7 @@ function GUIClass:BuildStationPanels()
     for i = 1, count do
         local station = stations[i]
 
-        if !station:IsValid() then
+        if !IsValid(station) then
             continue
         end
 
@@ -673,7 +673,7 @@ function GUIClass:DoPlayNotification(song, channel, ent)
     end
 
     -- Songs can deny notifications showing, common for continous mixes.
-    if !song or !song:IsValid() or !song:ShouldNotify() then
+    if !IsValid(song) or !song:ShouldNotify() then
         return
     end
 
@@ -685,7 +685,7 @@ function GUIClass:DoPlayNotification(song, channel, ent)
     local y = 64 * scaleMul
     local oldFrame = self.NotificationPanel
 
-    if IsValid(oldFrame) and oldFrame:IsValid() then
+    if IsValid(oldFrame) then
         -- Stop any active animations on the old notification.
         oldFrame:Stop()
 
@@ -834,7 +834,7 @@ function GUIClass:DoPlayNotification(song, channel, ent)
             return
         end
 
-        local channelDead = !channel or !channel:IsValid()
+        local channelDead = !IsValid(channel)
 
         -- If our channel is removed, start the kill timer.
         if channelDead then

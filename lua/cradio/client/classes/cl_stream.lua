@@ -34,7 +34,7 @@ local streamsGenerated = 0
 function StreamClass:__constructor(streamStruct)
     self.Station = streamStruct.Station
 
-    if !self.Station or !self.Station:IsValid() then
+    if !IsValid(self.Station) then
         return
     end
 
@@ -46,7 +46,7 @@ function StreamClass:__constructor(streamStruct)
 
     local curSong = self:GetCurrentSong()
 
-    if !curSong or !curSong:IsValid() then
+    if !IsValid(curSong) then
         return
     end
 
@@ -153,8 +153,6 @@ function StreamClass:Destroy()
 
     streamInstances[self:GetID()] = nil
 
-    setmetatable(self, nil)
-
     self.Destroyed = true
 end
 
@@ -255,9 +253,13 @@ end
 local playPreFormat = "Playing %s for stream %s!"
 
 function StreamClass:Update()
+    if !self:IsValid() then
+        return
+    end
+
     local channel = self:GetChannel()
 
-    if IsValid(channel) and channel:IsValid() then
+    if IsValid(channel) then
         channel:Stop()
     end
 
@@ -268,7 +270,7 @@ function StreamClass:Update()
     local nextSong = self:GetCurrentSong()
     local preBufferChannel = self:GetPreBufferChannel()
 
-    if IsValid(preBufferChannel) and preBufferChannel:IsValid() then
+    if IsValid(preBufferChannel) then
         self:SetChannel(preBufferChannel)
         self:SetPreBufferChannel(nil)
         self:QueuePreBuffer()
@@ -296,6 +298,10 @@ function StreamClass:SetChannel(channel)
 end
 
 function StreamClass:MakeChannel(song, callback)
+    if !self:IsValid() then
+        return
+    end
+
     song = song or self:GetCurrentSong()
 
     local playSong, path = song:GetPlayMethod()
@@ -327,6 +333,12 @@ function StreamClass:ProcessChannel(channel, song)
         ErrorNoHalt(self, " - Channel or entity for ", tostring(song), " invalid after initialization. Ensure file/URL is accessible.")
 
         self:Destroy()
+
+        return
+    end
+
+    if !self:IsValid() then
+        channel:Stop()
 
         return
     end
@@ -428,7 +440,7 @@ function StreamClass:QueuePreBuffer()
         local nextSong = self:GetNextSong()
 
         -- Song must not be nil and be valid (have both name and url).
-        if curSong != self:GetCurrentSong() or !IsValid(nextSong) or !nextSong:IsValid() then
+        if curSong != self:GetCurrentSong() or !IsValid(nextSong) then
             return
         end
 
@@ -522,7 +534,7 @@ function StreamClass:SetPlayersSpeaking(bSpeaking)
 
     local channel = self:GetChannel()
 
-    if !channel or !channel:IsValid() or self:Get3DEnabled() then
+    if !IsValid(channel) or self:Get3DEnabled() then
         return
     end
 
@@ -552,9 +564,7 @@ function StreamClass:StopStaticSound()
     end
 
     staticSound:FadeOut(1.0, function(sChannel)
-        -- FIXME: test
-        -- alt check: getmetatable(self) == StreamClass 
-        if !self.IsDestroyed and self.SetStaticSound then
+        if IsValid(self) and sChannel == self:GetStaticSound() then
             self:SetStaticSound(nil)
         end
 
@@ -563,7 +573,7 @@ function StreamClass:StopStaticSound()
 end
 
 local function StaticCallback(stream, channel)
-    if !stream or stream:IsPlaying() then
+    if !IsValid(stream) or stream:IsPlaying() then
         channel:Stop()
 
         return

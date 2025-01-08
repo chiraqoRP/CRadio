@@ -57,10 +57,10 @@ if CLIENT then
             return
         end
 
-        local steam = station:Stream(vehicle)
+        local stream = station:Stream(vehicle)
 
-        if steam:IsValid() then
-            steam:Play(true)
+        if IsValid(stream) then
+            stream:Play(true)
         end
     end)
 
@@ -90,6 +90,7 @@ if CLIENT then
         panel:CheckBox("Enable?", "cl_cradio")
         panel:CheckBox("Enable prebuffering?", "cl_cradio_prebuffer")
         panel:CheckBox('Enable "now playing" notification?', "cl_cradio_notification")
+        panel:CheckBox("Enable GTA:SA-like static on station change?", "cl_cradio_static")
         panel:CheckBox("Enable volume lowering on player speaking?", "cl_cradio_volume_lower_on_speak")
         panel:CheckBox("Enable spawnmenu override?", "cl_cradio_gui_spawnmenu")
 

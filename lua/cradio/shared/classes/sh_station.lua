@@ -48,7 +48,9 @@ local formatString = "[Station Object] | %s"
 local nullString = "[Station Object] | NULL"
 
 function StationClass:__tostring()
-	if !self:IsValid() then return nullString end
+	if !self:IsValid() then
+		return nullString
+	end
 
 	return string.format(formatString, self.Name)
 end
@@ -164,7 +166,7 @@ end
 local limitFormat = "[CRadio] | You have hit the song limit in playlist %s!"
 
 function StationClass:AddSong(song)
-	if !song or !song:IsValid() then
+	if !IsValid(song) then
 		return
 	end
 
@@ -180,7 +182,7 @@ function StationClass:AddSong(song)
 end
 
 function StationClass:RemoveSong(song)
-	if !song or !song:IsValid() then
+	if !IsValid(song) then
 		return
 	end
 
@@ -194,7 +196,7 @@ function StationClass:GetSubPlaylists()
 end
 
 function StationClass:AddSubPlaylist(subplaylist)
-	if !subplaylist or !subplaylist:IsValid() then
+	if !IsValid(subplaylist) then
 		return
 	end
 
@@ -202,7 +204,7 @@ function StationClass:AddSubPlaylist(subplaylist)
 end
 
 function StationClass:RemoveSubPlaylist(subplaylist)
-	if !subplaylist or !subplaylist:IsValid() then
+	if !IsValid(subplaylist) then
 		return
 	end
 
@@ -287,7 +289,7 @@ function StationClass:GeneratePlaylist()
 		local isSubPlaylist = i > songCount
 	    local object = (isSubPlaylist and self.SubPlaylists[i % songCount]) or self.Songs[i]
 
-		if !object:IsValid() or (object:GetChance()) < mathRandom() then
+		if !IsValid(object) or object:GetChance() < mathRandom() then
 			continue
 		end
 
@@ -467,7 +469,7 @@ function StationClass:Stream(ent, emitStatic, processCallback)
 	local curSong = self:GetCurrentSong()
 
 	-- Song must not be nil and be valid (have both name and url).
-	if !curSong or !curSong:IsValid() then
+	if !IsValid(curSong) then
 		return
 	end
 
@@ -490,7 +492,7 @@ function StationClass:UpdateStreams()
 
 	local curSong = self.Playlist[1]
 
-	if !IsValid(curSong) or !curSong:IsValid() then
+	if !IsValid(curSong) then
 		return
 	end
 
@@ -511,7 +513,7 @@ function StationClass:UpdateStreams()
 		end
 
 		-- When this happens, it's because the audio channel was stopped without updating the table.
-		if !stream or !stream:IsValid() then
+		if !IsValid(stream) then
 			-- Since the stream is invalid, remove the key (ent) from the table.
 			streams[ent] = nil
 

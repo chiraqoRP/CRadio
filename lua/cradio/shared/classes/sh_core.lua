@@ -25,7 +25,7 @@ function CoreClass:Initialize()
 		for i = 1, #self.SequentialStations do
 			local station = self.SequentialStations[i]
 
-			if !station:IsValid() then
+			if !IsValid(station) then
 				continue
 			end
 
@@ -84,7 +84,7 @@ function CoreClass:Station(name, stationStruct)
 	local fetchedStation = self:GetStation(name)
 
 	-- If a station with the same name already exists, return it.
-	if fetchedStation and fetchedStation:IsValid() then
+	if IsValid(fetchedStation) then
 		return fetchedStation
 	end
 
@@ -147,7 +147,7 @@ function CoreClass:PrintInfo()
 	for i = 1, count do
 		local station = self.SequentialStations[i]
 
-		if !station:IsValid() then
+		if !IsValid(station) then
 			continue
 		end
 

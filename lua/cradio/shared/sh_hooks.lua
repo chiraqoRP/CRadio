@@ -130,7 +130,7 @@ else
         local switchedSeats = enterTime < (plyTable.m_LastVehicleExit or 0) + 0.5
         local stream = veh:GetRadioStream()
 
-        if !switchedSeats and !stream and veh:GetRadioOn() then
+        if !switchedSeats and !IsValid(stream) and veh:GetRadioOn() then
             local currentStation = veh:GetCurrentStation()
 
             -- The radio is set to off.
@@ -140,7 +140,7 @@ else
 
             local nStream = currentStation:Stream(veh)
 
-            if nStream:IsValid() then
+            if IsValid(nStream) then
                 nStream:Play(true)
             end
         end
@@ -217,7 +217,7 @@ else
         local oldStream = ent:GetRadioStream()
 
         -- If we have a valid stream active and it's station is the same as the new one, stop.
-        if oldStream and oldStream:GetStation() == station then
+        if IsValid(oldStream) and oldStream:GetStation() == station then
             return
         end
 
@@ -240,7 +240,7 @@ else
             cGUI:DoPlayNotification(curSong, channel, sEnt)
         end)
 
-        if stream:IsValid() then
+        if IsValid(stream) then
             stream:Play(true)
         end
     end
@@ -264,7 +264,7 @@ else
 
             local stream = currentStation:Stream(ent, true)
 
-            if stream:IsValid() then
+            if IsValid(stream) then
                 stream:Play(true)
             end
         end
@@ -351,7 +351,7 @@ else
 
         local stream = vehicle:GetRadioStream()
 
-        if !stream or !stream:IsValid() then
+        if !IsValid(stream) then
             return
         end
 
@@ -379,7 +379,7 @@ else
 
         local stream = vehicle:GetRadioStream()
 
-        if !stream or !stream:IsValid() then
+        if !IsValid(stream) then
             return
         end
 

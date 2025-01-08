@@ -75,7 +75,7 @@ function SubPlaylistClass:SetParent(parent)
 	self.Parent = parent
 
 	-- If the parent provided isn't valid, don't add the sub-playlist to it.
-	if !parent or !parent:IsValid() then
+	if !IsValid(parent) then
 		return
 	end
 
@@ -103,7 +103,7 @@ function SubPlaylistClass:GetSongs()
 end
 
 function SubPlaylistClass:AddSong(song)
-	if !song or !song:IsValid() then
+	if !IsValid(song) then
 		return
 	end
 
@@ -111,7 +111,7 @@ function SubPlaylistClass:AddSong(song)
 end
 
 function SubPlaylistClass:RemoveSong(song)
-	if !song or !song:IsValid() then
+	if !IsValid(song) then
 		return
 	end
 

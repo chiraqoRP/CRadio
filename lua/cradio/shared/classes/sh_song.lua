@@ -67,7 +67,7 @@ function SongClass:IsValid()
 		return false
 	end
 
-	return (string.IsValid(self.URL) or string.IsValid(self.File)) and self.Parent:IsValid()
+	return (string.IsValid(self.URL) or string.IsValid(self.File)) and IsValid(self.Parent)
 end
 
 function SongClass:New(name)
@@ -123,7 +123,7 @@ function SongClass:SetParent(parent)
 	self.Parent = parent
 
 	-- If the parent provided isn't valid, don't add the song to it.
-	if !parent or !parent:IsValid() then
+	if !IsValid(parent) then
 		return
 	end
 
@@ -133,7 +133,7 @@ end
 
 function SongClass:GetStation()
 	-- If the parent provided isn't valid, don't add the song to it.
-	if !self.Parent or !self.Parent:IsValid() then
+	if !IsValid(self.Parent) then
 		return
 	end
 
