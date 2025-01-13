@@ -473,14 +473,14 @@ function StationClass:Stream(ent, emitStatic, processCallback)
 		return
 	end
 
-	CRadio:DebugPrint(string.format(sCreateFormat, tostring(stream), tostring(ent)))
-
 	local stream = CRadioStreamClass({
 		Entity = ent,
 		Station = self,
 		ShouldEmitStatic = emitStatic,
 		OnProcess = processCallback
 	})
+
+	CRadio:DebugPrint(string.format(sCreateFormat, tostring(stream), tostring(ent)))
 
 	return stream
 end
