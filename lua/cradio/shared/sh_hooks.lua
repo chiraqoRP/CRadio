@@ -29,10 +29,6 @@ if SERVER then
             return
         end
 
-        local plyTable = ply:GetTable()
-
-        plyTable.m_LastVehicleEnter = CurTime()
-
         timer.Simple(FrameTime() + 0.75, function()
             if !IsValid(ply) or !IsValid(veh) then
                 return
@@ -59,11 +55,7 @@ if SERVER then
             return
         end
 
-        local plyTable = ply:GetTable()
-        local exitTime = CurTime()
         local wasDriver = veh:GetDriver() == ply
-
-        plyTable.m_LastVehicleExit = exitTime
 
         timer.Simple(FrameTime() + 0.1, function()
             if !IsValid(veh) then
@@ -122,12 +114,8 @@ else
         -- Get the real vehicle entity in case we're using a custom base.
         veh = CLib.GetVehicle(veh)
 
-        local plyTable = ply:GetTable()
-        local enterTime = CurTime()
-
-        plyTable.m_LastVehicleEnter = enterTime
-
-        local switchedSeats = enterTime < (plyTable.m_LastVehicleExit or 0) + 0.5
+        -- Make sure we didn't switch from another vehicle seat.
+        local switchedSeats = CurTime() < (ply.LastVehicleExit or 0) + 0.5
         local stream = veh:GetRadioStream()
 
         if !switchedSeats and !IsValid(stream) and veh:GetRadioOn() then
@@ -154,10 +142,9 @@ else
         -- Get the real vehicle entity in case we're using a custom base.
         veh = CLib.GetVehicle(veh)
 
-        local plyTable = ply:GetTable()
         local exitTime = CurTime()
 
-        plyTable.m_LastVehicleExit = exitTime
+        ply.LastVehicleExit = exitTime
 
         timer.Simple(engine.ServerFrameTime() + 0.1, function()
             if !IsValid(veh) then
@@ -357,7 +344,7 @@ else
 
         stream:SetPlayersSpeaking(true)
     end)
-    
+
     hook.Add("PlayerEndVoice", "CRadio.ResetVolume", function(ply)
         local client = LocalPlayer()
 
