@@ -485,7 +485,7 @@ local defaultVol = GetConVar("cl_cradio_volume")
 local lastViewPos = Vector()
 local lastViewAng = Angle()
 local dir = Vector()
-local FADE_DIST = 1500
+local FADE_DIST = 2048
 
 function StreamClass:CalculateVolume(eyeRight)
     local ent = self:GetEntity()
@@ -512,7 +512,7 @@ function StreamClass:CalculateVolume(eyeRight)
     local dist = dir:Length()
 
     -- Attenuate depending on distance
-    vol = vol * (1 - math.Clamp(dist / FADE_DIST, 0, 1))
+    vol = vol * (0.5 - math.Clamp(dist / FADE_DIST, 0, 0.5))
 
     eyeRight = eyeRight or lastViewAng:Right()
 
