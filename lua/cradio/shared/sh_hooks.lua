@@ -114,27 +114,38 @@ else
         -- Get the real vehicle entity in case we're using a custom base.
         veh = CLib.GetVehicle(veh)
 
-        -- Make sure we didn't switch from another vehicle seat.
-        local switchedSeats = CurTime() < (ply.LastVehicleExit or 0) + 0.5
+        local switchedSeats = CurTime() < (ply.m_flLastVehicleExit or 0) + 0.5
         local stream = veh:GetRadioStream()
+
+        if IsValid(stream) then
+            stream:Set3DEnabled(false)
+        end
 
         if !switchedSeats and !IsValid(stream) and veh:GetRadioOn() then
             local currentStation = veh:GetCurrentStation()
 
             -- The radio is set to off.
-            if !currentStation then
+            if !IsValid(currentStation) then
                 return
             end
 
             local nStream = currentStation:Stream(veh)
 
-            if IsValid(nStream) then
-                nStream:Play(true)
+            if !IsValid(nStream) then
+                return
             end
+
+            nStream:Play(true)
         end
     end
 
+    local should3D = GetConVar("cl_cradio_3d")
+
     local function OnPlayerLeaveVehicle(ply, veh)
+        local exitTime = CurTime()
+
+        ply.m_flLastVehicleExit = exitTime
+
         local cGUI = CRadio:GetGUI()
 
         cGUI:Close()
@@ -142,9 +153,15 @@ else
         -- Get the real vehicle entity in case we're using a custom base.
         veh = CLib.GetVehicle(veh)
 
-        local exitTime = CurTime()
+        if !IsValid(veh) then
+            return
+        end
 
-        ply.LastVehicleExit = exitTime
+        local cStream = veh:GetRadioStream()
+
+        if !IsValid(cStream) then
+            return
+        end
 
         timer.Simple(engine.ServerFrameTime() + 0.1, function()
             if !IsValid(veh) then
@@ -154,9 +171,19 @@ else
             local inVehicle = ply:InVehicle()
             local switchedSeats = inVehicle and CurTime() < exitTime + 0.5
 
-            if !inVehicle or !switchedSeats then
-                veh:StopRadioStream(true)
+            if !IsValid(cStream) or inVehicle or switchedSeats then
+                return
             end
+
+            local curSong = cStream:GetCurrentSong()
+
+            if !should3D:GetBool() or !IsValid(curSong) or curSong:GetPlayMethod() == sound.PlayURL then
+                veh:StopRadioStream(true)
+
+                return
+            end
+
+            cStream:Set3DEnabled(true)
         end)
     end
 
@@ -195,13 +222,14 @@ else
     end)
 
     local function StationVarChanged(ent, name, old, new)
-        -- If we're not in the vehicle or our radio is off, don't play/stop any radio stream.
-        if ent != CLib.GetVehicle() or !ent:GetRadioOn() then
+        local oldStream = ent:GetRadioStream()
+
+        -- If the ent's radio is off, don't play/stop any radio stream.
+        if !ent:GetRadioOn()  then
             return
         end
 
         local station = CRadio:GetStation(new)
-        local oldStream = ent:GetRadioStream()
 
         -- If we have a valid stream active and it's station is the same as the new one, stop.
         if IsValid(oldStream) and oldStream:GetStation() == station then
@@ -215,46 +243,71 @@ else
             return
         end
 
+        local isOurVehicle = ent == CLib.GetVehicle() and !ent.CRadio
         local curSong = station:GetCurrentSong()
+
+        -- If we're not in the vehicle and the station uses URLs, don't start a stream.
+        if !isOurVehicle and (!should3D:GetBool() or curSong:GetPlayMethod() == sound.PlayURL) then
+            return
+        end
+
         local stream = station:Stream(ent, true, function(cStream, channel, sEnt)
             -- We only want this to run on the first channel's initialization.
-            if cStream.DidUpdate or channel == cStream:GetPreBufferChannel() then
+            if !isOurVehicle or cStream.DidUpdate or channel == cStream:GetPreBufferChannel() then
                 return
             end
 
+            local cCurSong = cStream:GetCurrentSong()
             local cGUI = CRadio:GetGUI()
 
-            cGUI:DoPlayNotification(curSong, channel, sEnt)
+            cGUI:DoPlayNotification(cCurSong, channel, sEnt)
         end)
 
-        if IsValid(stream) then
-            stream:Play(true)
+        if !IsValid(stream) then
+            return
         end
+
+        -- Not our vehicle? Set the stream to 3D.
+        if !isOurVehicle then
+            stream:Set3DEnabled(true)
+        end
+
+        stream:Play(true)
     end
 
     local function RadioStateVarChanged(ent, name, old, new)
         local currentStation = ent:GetCurrentStation()
 
-        if new and !currentStation then
+        if new and !IsValid(currentStation) then
             return
         end
 
         if !new then
             ent:StopRadioStream(true, 0.25)
-        else
-            local isOurVehicle = ent == CLib.GetVehicle()
 
-            -- If we're not in the vehicle, don't start a stream.
-            if !isOurVehicle then
-                return
-            end
-
-            local stream = currentStation:Stream(ent, true)
-
-            if IsValid(stream) then
-                stream:Play(true)
-            end
+            return
         end
+
+        local isOurVehicle = ent == CLib.GetVehicle() and !ent.CRadio
+        local curSong = currentStation:GetCurrentSong()
+
+        -- If we're not in the vehicle and the station uses URLs, don't start a stream.
+        if !isOurVehicle and (!should3D:GetBool() or curSong:GetPlayMethod() == sound.PlayURL) then
+            return
+        end
+
+        local stream = currentStation:Stream(ent, true)
+
+        if !IsValid(stream) then
+            return
+        end
+
+        -- Not our vehicle? Set the stream to 3D.
+        if !isOurVehicle then
+            stream:Set3DEnabled(true)
+        end
+
+        stream:Play(true)
     end
 
     local stationVar = "CRadio.Station"
@@ -272,6 +325,67 @@ else
     end)
 
     local seatClass = "prop_vehicle_prisoner_pod"
+    local dbgTransmitFormat = "%s changed transmit state to %s."
+
+    hook.Add("NotifyShouldTransmit", "CRadio.PVSHandler", function(ent, shouldTransmit)
+        if !IsValid(ent) then
+            return
+        end
+
+        local isVehicle = ent:IsVehicle()
+
+        if !isVehicle and !ent.IsGlideVehicle and !ent.LVS then
+            return
+        end
+
+        -- Check if we're a seat for custom vehicle.
+        if isVehicle and ent:GetClass() == seatClass then
+            return
+        end
+
+        local veh = CLib.GetVehicle(ent)
+
+        if !IsValid(veh) then
+            return
+        end
+
+        CRadio:DebugPrint(string.format(dbgTransmitFormat, tostring(ent), tostring(shouldTransmit)))
+
+        local cStream = ent:GetRadioStream()
+
+        if !shouldTransmit and IsValid(cStream) then
+            ent:StopRadioStream(true, 0.25)
+
+            return
+        end
+
+        local currentStation = ent:GetCurrentStation()
+
+        if !ent:GetRadioOn() or !IsValid(currentStation) then
+            return
+        end
+
+        local isOurVehicle = ent == CLib.GetVehicle() and !ent.CRadio
+        local curSong = currentStation:GetCurrentSong()
+
+        -- If we're not in the vehicle and the station uses URLs, don't start a stream.
+        if !isOurVehicle and (!should3D:GetBool() or curSong:GetPlayMethod() == sound.PlayURL) then
+            return
+        end
+
+        local stream = currentStation:Stream(ent)
+
+        if !IsValid(stream) then
+            return
+        end
+
+        -- Not our vehicle? Set the stream to 3D.
+        if !isOurVehicle then
+            stream:Set3DEnabled(true)
+        end
+
+        stream:Play()
+    end)
 
     hook.Add("EntityRemoved", "CRadio.ClearSounds", function(ent, fullUpdate)
         if fullUpdate or !IsValid(ent) then

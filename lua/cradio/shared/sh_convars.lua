@@ -1,5 +1,6 @@
 if CLIENT then
     CreateClientConVar("cl_cradio", 1, true, false, "Enables/disables the radio by stopping channel creation and disallowing opening the GUI.", 0, 1)
+    CreateClientConVar("cl_cradio_3d", 1, true, false, "Enables 3D streams for all vehicles, including ones other than your own. Only works with file (not-online) streams.", 0, 1)
     CreateClientConVar("cl_cradio_prebuffer", 1, true, false, "Makes the upcoming track for your current station preload.", 0, 1)
     CreateClientConVar("cl_cradio_notification", 1, true, false, 'Shows the "now playing" notification on station change or next track.', 0, 1)
     CreateClientConVar("cl_cradio_static", 0, true, false, "Enables GTA:SA-like static when switching stations.", 0, 1)
@@ -27,6 +28,35 @@ if CLIENT then
             end
 
             for ent, stream in pairs(streams) do
+                ent:StopRadioStream(true)
+            end
+        end
+    end)
+
+    cvars.AddChangeCallback("cl_cradio_3d", function(name, old, new)
+        if old == new or new then
+            return
+        end
+
+        local stations = CRadio:GetStations(true)
+
+        if table.IsEmpty(stations) then
+            return
+        end
+
+        for i = 1, #stations do
+            local station = stations[i]
+            local streams = station:GetStreams()
+
+            if table.IsEmpty(streams) then
+                continue
+            end
+
+            for ent, stream in pairs(streams) do
+                if !stream:Get3DEnabled() then
+                    return
+                end
+
                 ent:StopRadioStream(true)
             end
         end
