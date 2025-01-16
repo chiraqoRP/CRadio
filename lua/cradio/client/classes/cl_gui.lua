@@ -364,10 +364,7 @@ local minIcon = 16
 
 local function CalcElementSize(count)
     if count > 12 then
-        iconSize = 64 - (minIcon - minIcon / (count - 12))
-
-        -- This rounds the size up/down to the closest power of two integer.
-        iconSize = 2 ^ math.floor(math.log(iconSize, 2) + 0.5)
+        iconSize = math.floor(64 - (minIcon - minIcon / (count - 12)))
     else
         iconSize = 64
     end
