@@ -325,9 +325,12 @@ function StreamClass:ProcessChannel(channel, song)
     song = song or self:GetCurrentSong()
 
     local entity = self:GetEntity()
+    local channelValid = IsValid(channel)
 
-    if !IsValid(channel) or !IsValid(entity) then
-        ErrorNoHalt(self, " - Channel or entity for ", tostring(song), " invalid after initialization. Ensure file/URL is accessible.")
+    if !channelValid or !IsValid(entity) then
+        if !channelValid then
+            ErrorNoHalt(self, " - Channel for ", tostring(song), " invalid after initialization. Ensure file/URL is accessible.")
+        end
 
         self:Destroy()
 
