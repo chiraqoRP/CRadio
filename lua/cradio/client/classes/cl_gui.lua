@@ -518,7 +518,7 @@ function GUIClass:BuildStationPanel(station, element, isOffButton)
         self.Circle()
 
         -- Draws our icon as a textured rect.
-        DrawIcon(radius_m / 2, radius_m / 2, iconAlpha, math.Round(iconSize * 1.4), self.Icon)
+        DrawIcon(radius_m / 2, radius_m / 2, iconAlpha, math.Round(iconSize * 1.6), self.Icon)
 
         local outlineAlpha = Lerp(buf, 0, 170)
 
