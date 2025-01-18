@@ -68,6 +68,7 @@ function StreamClass:__constructor(streamStruct)
         self[key] = val
     end
 
+    self.Entity:SetRadioStream(self)
     streamInstances[self.ID] = self
 
     self:MakeChannel(curSong)
@@ -345,7 +346,6 @@ function StreamClass:ProcessChannel(channel, song)
 
     channel:SetStream(self)
     channel:SetIsQueuedForPlay(true)
-    entity:SetRadioStream(self)
 
     if isfunction(self.OnProcess) then
         self.OnProcess(self, channel, entity)
