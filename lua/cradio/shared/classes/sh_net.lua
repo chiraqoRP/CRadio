@@ -17,6 +17,8 @@ function NetClass:__tostring()
 	return classString
 end
 
+local STATION_ID_BITS = 8
+
 --- CLIENT --> SERVER
 --- Networks a play request (start/stop station) to the server.
 function NetClass:SendPlayRequest(station, ent)
@@ -37,7 +39,7 @@ function NetClass:SendPlayRequest(station, ent)
 	net.WriteBool(isEnabling)
 
 	if isEnabling then
-		net.WriteUInt(station:GetID(), 8)
+		net.WriteUInt(station:GetID(), STATION_ID_BITS)
 	end
 
 	local isCustomEnt = isentity(ent)
@@ -51,6 +53,7 @@ function NetClass:SendPlayRequest(station, ent)
 	net.SendToServer()
 end
 
+local REQUEST_COOLDOWN = 0.5
 local lastRequest = {}
 
 --- SERVER
@@ -58,7 +61,7 @@ local lastRequest = {}
 function NetClass:ReceivePlayRequest(len, ply)
 	local curTime = CurTime()
 
-	if CLIENT or !IsValid(ply) or (lastRequest[ply] or 0) + 0.5 >= curTime then
+	if CLIENT or !IsValid(ply) or (lastRequest[ply] or 0) + REQUEST_COOLDOWN >= curTime then
 		return
 	end
 
@@ -66,7 +69,7 @@ function NetClass:ReceivePlayRequest(len, ply)
 
 	local isEnabling = net.ReadBool()
 	local station = nil
-	local id = net.ReadUInt(8)
+	local id = net.ReadUInt(STATION_ID_BITS)
 
 	if isEnabling then
 		station = CRadio:GetStation(id)
@@ -108,8 +111,6 @@ function NetClass:ReceivePlayRequest(len, ply)
 	end
 end
 
-local pColor = Color(200, 0, 0)
-
 --- SERVER --> CLIENT
 --- Networks all playlists to client(s).
 function NetClass:NetworkAllPlaylists(stations, ply)
@@ -121,7 +122,7 @@ function NetClass:NetworkAllPlaylists(stations, ply)
 
 	-- Playlist net message
 	net.Start("CRadio.NetworkPlaylist")
-	net.WriteUInt(stationCount, 8)
+	net.WriteUInt(stationCount, STATION_ID_BITS)
 
 	local anyValidPlaylists = false
 
@@ -149,6 +150,9 @@ function NetClass:NetworkAllPlaylists(stations, ply)
 	end
 end
 
+local SONG_ID_BITS = 16
+local SONG_COUNT_BITS = 10
+
 --- CLIENT
 --- Receives networked playlist(s).
 function NetClass:ReceivePlaylist(len)
@@ -157,16 +161,16 @@ function NetClass:ReceivePlaylist(len)
 	end
 
 	local songs = CRadio:GetSongs()
-	local stationCount = net.ReadUInt(8)
+	local stationCount = net.ReadUInt(STATION_ID_BITS)
 
 	for i = 1, stationCount do
-		local station = CRadio:GetStation(net.ReadUInt(8))
+		local station = CRadio:GetStation(net.ReadUInt(STATION_ID_BITS))
 		local playlist = station:GetPlaylist()
 		local songEndTime = net.ReadFloat()
-		local songCount = net.ReadUInt(10)
+		local songCount = net.ReadUInt(SONG_COUNT_BITS)
 
 		for k = 1, songCount do
-			local id = net.ReadUInt(16)
+			local id = net.ReadUInt(SONG_ID_BITS)
 			local song = songs[id]
 
 			playlist[k] = song

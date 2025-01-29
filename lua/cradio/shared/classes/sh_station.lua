@@ -527,6 +527,10 @@ function StationClass:UpdateStreams()
 	end
 end
 
+local STATION_ID_BITS = 8
+local SONG_ID_BITS = 16
+local SONG_COUNT_BITS = 10
+
 function StationClass:DoNetwork(externalNet)
 	if CLIENT then
 		return
@@ -534,24 +538,24 @@ function StationClass:DoNetwork(externalNet)
 
 	if !externalNet then
 		net.Start("CRadio.NetworkPlaylist")
-		net.WriteUInt(1, 8)
+		net.WriteUInt(1, STATION_ID_BITS)
 	end
 
 	local playlist = self:GetPlaylist()
 	local songCount = #playlist
 
-	net.WriteUInt(self:GetID(), 8)
+	net.WriteUInt(self:GetID(), ID_BITS)
 
 	local curSong = self:GetCurrentSong()
 	local songEndTime = (curSong and curSong:GetEndTime()) or CurTime()
 
 	net.WriteFloat(songEndTime)
-	net.WriteUInt(songCount, 10)
+	net.WriteUInt(songCount, SONG_COUNT_BITS)
 
 	for i = 1, songCount do
 		local song = playlist[i]
 
-		net.WriteUInt(song:GetID(), 16)
+		net.WriteUInt(song:GetID(), SONG_ID_BITS)
 	end
 
 	if !externalNet then
