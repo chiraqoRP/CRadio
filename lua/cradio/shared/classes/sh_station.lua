@@ -544,7 +544,7 @@ function StationClass:DoNetwork(externalNet)
 	local playlist = self:GetPlaylist()
 	local songCount = #playlist
 
-	net.WriteUInt(self:GetID(), ID_BITS)
+	net.WriteUInt(self:GetID(), STATION_ID_BITS)
 
 	local curSong = self:GetCurrentSong()
 	local songEndTime = (curSong and curSong:GetEndTime()) or CurTime()
